@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "types": [],
+        "strict": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "declaration": true,
+        "declarationDir": "dist/types",
+        "outDir": "dist",
+        "noEmit": true,
+        "sourceMap": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
+        "paths": {
+            "@/*": ["./src/*"]
+        }
+    },
+    "include": ["src/**/*.ts", "global.d.ts"],
+    "exclude": ["node_modules", "dist"]
+}
