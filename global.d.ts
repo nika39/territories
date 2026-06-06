@@ -12,7 +12,9 @@ declare module "*.css" {
 
 declare const process: {
     env: {
+        GOOGLE_MAP_API_KEY: string;
         YANDEX_MAP_API_KEY: string;
+        MAPTILER_API_KEY: string;
     };
 };
 

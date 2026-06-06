@@ -45,6 +45,8 @@
         "webpack-merge": "^6.0.1"
     },
     "dependencies": {
+        "@maptiler/leaflet-maptilersdk": "^4.1.1",
+        "@maptiler/sdk": "^4.0.2",
         "leaflet": "^1.9.4"
     }
 }

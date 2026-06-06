@@ -1,5 +1,6 @@
 import "./styles.scss";
 import L from "leaflet";
+import { MaptilerLayer } from "@maptiler/leaflet-maptilersdk";
 
 // Tbilisi initial coordinates (Avlabari/Isani area)
 const initialCenter: L.LatLngTuple = [41.674333, 44.875718];
@@ -10,32 +11,47 @@ let map: L.Map | null = null;
 let currentProvider = "google-street";
 
 // Define tile layers
-const osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+const maptilerApiKey: string = process.env.MAPTILER_API_KEY || "";
+
+// Vector MapTiler layer using @maptiler/leaflet-maptilersdk
+// Custom map style ID: 019e9cdf-f7aa-7512-9abc-8773a51fd486
+const maptilerLayer = new MaptilerLayer({
+    apiKey: maptilerApiKey,
+    style: "019e9cdf-f7aa-7512-9abc-8773a51fd486",
 });
 
-const googleStreetLayer = L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ka", {
-    maxZoom: 21,
-    attribution: '&copy; Google'
-});
+const googleStreetLayer = L.tileLayer(
+    "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ka",
+    {
+        maxZoom: 21,
+        attribution: "&copy; Google",
+    },
+);
 
-const yandexLayer = L.tileLayer("https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=en_US", {
-    maxZoom: 19,
-    attribution: '&copy; Yandex'
-});
+const yandexLayer = L.tileLayer(
+    "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=en_US",
+    {
+        maxZoom: 19,
+        attribution: "&copy; Yandex",
+    },
+);
 
 // Store layers in a record
-const layers: Record<string, L.TileLayer> = {
-    "osm": osmLayer,
+const layers: Record<string, L.Layer> = {
+    maptiler: maptilerLayer,
     "google-street": googleStreetLayer,
-    "yandex": yandexLayer
+    yandex: yandexLayer,
 };
 
 /**
  * Recreates the Leaflet map instance with the appropriate CRS projection.
  */
-function recreateMap(crs: L.CRS, center: L.LatLngTuple, zoom: number, provider: string): void {
+function recreateMap(
+    crs: L.CRS,
+    center: L.LatLngTuple,
+    zoom: number,
+    provider: string,
+): void {
     if (map) {
         map.remove();
     }
@@ -45,13 +61,15 @@ function recreateMap(crs: L.CRS, center: L.LatLngTuple, zoom: number, provider: 
         zoom: zoom,
         zoomControl: false,
         attributionControl: true,
-        crs: crs
+        crs: crs,
     });
 
     // Add zoom control to top-right
-    L.control.zoom({
-        position: "topright"
-    }).addTo(map);
+    L.control
+        .zoom({
+            position: "topright",
+        })
+        .addTo(map);
 
     // Bind coordinate display on move
     map.on("move", () => {
@@ -107,15 +125,15 @@ function setupMapSwitcher(): void {
             const zoom = map.getZoom();
 
             // Determine CRS: Yandex uses EPSG3395, OSM/Google use EPSG3857
-            const crs = (provider === "yandex") ? L.CRS.EPSG3395 : L.CRS.EPSG3857;
+            const crs = provider === "yandex" ? L.CRS.EPSG3395 : L.CRS.EPSG3857;
 
             // Recreate map with new CRS and layer
             recreateMap(crs, [lat, lng], zoom, provider);
 
             // Update subtitle
             if (subtitle) {
-                if (provider === "osm") {
-                    subtitle.textContent = "OpenStreetMap ინტეგრაცია";
+                if (provider === "maptiler") {
+                    subtitle.textContent = "MapTiler ინტეგრაცია";
                 } else if (provider === "google-street") {
                     subtitle.textContent = "Google Maps ინტეგრაცია";
                 } else if (provider === "yandex") {
@@ -133,7 +151,9 @@ function setupMapSwitcher(): void {
  */
 function setupGlobalSidebarControls(): void {
     // 1. Search Box parser (fly to coordinates if format matches "lat, lng")
-    const searchInput = document.getElementById("search-input") as HTMLInputElement;
+    const searchInput = document.getElementById(
+        "search-input",
+    ) as HTMLInputElement;
     if (searchInput) {
         searchInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") {
@@ -146,16 +166,19 @@ function setupGlobalSidebarControls(): void {
                     const lng = parseFloat(match[2]);
 
                     map.flyTo([lat, lng], 17, {
-                        duration: 1.5
+                        duration: 1.5,
                     });
 
                     // Update dynamic coordinates display immediately
-                    const coordDisplay = document.getElementById("coord-display");
+                    const coordDisplay =
+                        document.getElementById("coord-display");
                     if (coordDisplay) {
                         coordDisplay.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
                     }
                 } else {
-                    console.log(`Searching for: ${query} (Geocoding not implemented)`);
+                    console.log(
+                        `Searching for: ${query} (Geocoding not implemented)`,
+                    );
                 }
             }
         });
@@ -166,7 +189,7 @@ function setupGlobalSidebarControls(): void {
 document.addEventListener("DOMContentLoaded", () => {
     // Initialize default Google Maps view (EPSG:3857)
     recreateMap(L.CRS.EPSG3857, initialCenter, initialZoom, "google-street");
-    
+
     // Set up switcher and global side panel listeners once
     setupMapSwitcher();
     setupGlobalSidebarControls();
