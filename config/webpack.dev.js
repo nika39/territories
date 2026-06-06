@@ -62,7 +62,7 @@ module.exports = merge(common, {
                 },
             },
             {
-                test: /\.s[ac]ss$/i,
+                test: /\.(s[ac]ss|css)$/i,
                 use: [
                     {
                         loader: "style-loader",

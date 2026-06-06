@@ -18,7 +18,8 @@
         "isolatedModules": true,
         "lib": ["ESNext", "DOM", "DOM.Iterable"],
         "paths": {
-            "@/*": ["./src/*"]
+            "@/*": ["./src/*"],
+            "ymaps3": ["./node_modules/@yandex/ymaps3-types"]
         }
     },
     "include": ["src/**/*.ts", "global.d.ts"],
