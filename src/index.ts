@@ -29,7 +29,7 @@ const googleStreetLayer = L.tileLayer(
 );
 
 const yandexLayer = L.tileLayer(
-    "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=en_US",
+    "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ka_GE",
     {
         maxZoom: 19,
         attribution: "&copy; Yandex",
