@@ -8,7 +8,7 @@ const initialZoom = 17;
 
 // Global map reference and active provider state
 let map: L.Map | null = null;
-let currentProvider = "google-street";
+let currentProvider = "yandex";
 
 // Define tile layers
 const maptilerApiKey: string = process.env.MAPTILER_API_KEY || "";
@@ -63,6 +63,9 @@ function recreateMap(
         zoomControl: false,
         attributionControl: true,
         crs: crs,
+        zoomSnap: 0.5,
+        zoomDelta: 0.5,
+        wheelPxPerZoomLevel: 120,
     });
 
     // Add zoom control to top-right
@@ -188,8 +191,8 @@ function setupGlobalSidebarControls(): void {
 
 // Initial initialization when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
-    // Initialize default Google Maps view (EPSG:3857)
-    recreateMap(L.CRS.EPSG3857, initialCenter, initialZoom, "google-street");
+    // Initialize default Yandex Maps view (EPSG:3395)
+    recreateMap(L.CRS.EPSG3395, initialCenter, initialZoom, "yandex");
 
     // Set up switcher and global side panel listeners once
     setupMapSwitcher();
