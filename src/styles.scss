@@ -56,30 +56,6 @@ html {
     overflow: hidden;
 }
 
-.leaflet-control-zoom {
-    margin-right: 24px !important;
-    margin-top: 24px !important;
-}
-
-.leaflet-control-zoom-in,
-.leaflet-control-zoom-out {
-    background: rgba(18, 18, 22, 0.85) !important;
-    backdrop-filter: blur(10px) !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    width: 36px !important;
-    height: 36px !important;
-    line-height: 36px !important;
-    font-size: 1.1rem !important;
-    transition: all 0.25s ease !important;
-
-    &:hover {
-        background: rgba(30, 30, 38, 0.95) !important;
-        color: #007aff !important;
-    }
-}
-
 /* Premium Dashboard Sidebar */
 .dashboard-sidebar {
     position: absolute;
@@ -522,7 +498,6 @@ html {
         opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.leaflet-control-zoom,
 .leaflet-pm-toolbar {
     transition:
         transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
@@ -540,7 +515,6 @@ body.ui-hidden {
         pointer-events: none !important;
     }
 
-    .leaflet-control-zoom,
     .leaflet-pm-toolbar {
         transform: translateX(calc(100% + 40px)) scale(0.96) !important;
         opacity: 0 !important;
@@ -650,7 +624,8 @@ body.ui-hidden {
             border-radius: 14px;
             color: $text-primary;
             font-size: 0.78rem;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-family:
+                ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             line-height: 1.45;
             outline: none;
             transition: all 0.25s ease;
@@ -687,12 +662,17 @@ body.ui-hidden {
             font-size: 0.82rem;
             font-weight: 600;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 7px;
             outline: none;
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+            svg {
+                flex-shrink: 0;
+                display: block;
+            }
 
             &.primary {
                 flex: 1;
@@ -759,13 +739,17 @@ body.ui-hidden {
    ========================================================================== */
 .leaflet-pm-toolbar {
     margin-right: 24px !important;
-    margin-top: 12px !important;
+    margin-top: 10px !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
     border-radius: 14px !important;
     overflow: hidden;
     background: rgba(18, 18, 22, 0.85) !important;
     backdrop-filter: blur(16px) !important;
+
+    &:first-child {
+        margin-top: 24px !important;
+    }
 
     .button-container {
         a.leaflet-buttons-control-button {
@@ -788,12 +772,25 @@ body.ui-hidden {
                 height: 18px;
             }
 
+            svg {
+                display: block;
+                color: #ffffff;
+                opacity: 0.85;
+                transition: all 0.2s ease;
+            }
+
             &:hover {
                 background: rgba(255, 255, 255, 0.08) !important;
 
                 .control-icon {
                     opacity: 1;
-                    filter: invert(48%) sepia(85%) saturate(3000%) hue-rotate(200deg) brightness(105%) contrast(105%);
+                    filter: invert(48%) sepia(85%) saturate(3000%)
+                        hue-rotate(200deg) brightness(105%) contrast(105%);
+                }
+
+                svg {
+                    opacity: 1;
+                    color: #007aff;
                 }
             }
         }
@@ -807,39 +804,50 @@ body.ui-hidden {
 
             .control-icon {
                 opacity: 1;
-                filter: invert(48%) sepia(85%) saturate(3000%) hue-rotate(200deg) brightness(105%) contrast(105%);
+                filter: invert(48%) sepia(85%) saturate(3000%)
+                    hue-rotate(200deg) brightness(105%) contrast(105%);
+            }
+
+            svg {
+                opacity: 1;
+                color: #007aff;
             }
         }
     }
+}
 
-    .leaflet-pm-actions-container {
-        background: rgba(18, 18, 22, 0.94) !important;
-        backdrop-filter: blur(16px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-radius: 12px !important;
-        overflow: hidden;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
-        margin-right: 10px !important;
+/* Hide Geoman cursor helper tooltips completely */
+.leaflet-pm-tooltip {
+    display: none !important;
+}
 
-        .leaflet-pm-action {
-            background: transparent !important;
+.leaflet-pm-actions-container {
+    background: rgba(18, 18, 22, 0.94) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    margin-right: 10px !important;
+
+    .leaflet-pm-action {
+        background: transparent !important;
+        color: #ffffff !important;
+        font-size: 0.78rem !important;
+        font-weight: 500 !important;
+        padding: 8px 12px !important;
+        height: auto !important;
+        line-height: normal !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+        transition: all 0.2s ease !important;
+
+        &:hover {
+            background: rgba(0, 122, 255, 0.25) !important;
             color: #ffffff !important;
-            font-size: 0.78rem !important;
-            font-weight: 500 !important;
-            padding: 8px 12px !important;
-            height: auto !important;
-            line-height: normal !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
-            transition: all 0.2s ease !important;
+        }
 
-            &:hover {
-                background: rgba(0, 122, 255, 0.25) !important;
-                color: #ffffff !important;
-            }
-
-            &:last-child {
-                border-right: none !important;
-            }
+        &:last-child {
+            border-right: none !important;
         }
     }
 }
@@ -853,130 +861,6 @@ body.ui-hidden {
     gap: 12px;
     padding-bottom: 4px;
     border-bottom: 1px solid $border-light;
-
-    .geoman-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        .geoman-title-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-
-            h3 {
-                font-size: 0.8rem;
-                color: $text-secondary;
-                text-transform: uppercase;
-                letter-spacing: 0.8px;
-                font-weight: 600;
-            }
-
-            .count-badge {
-                font-size: 0.72rem;
-                font-weight: 700;
-                color: #ffffff;
-                background: rgba(255, 255, 255, 0.08);
-                border: 1px solid rgba(255, 255, 255, 0.12);
-                padding: 1px 7px;
-                border-radius: 10px;
-                min-width: 20px;
-                text-align: center;
-            }
-        }
-
-        .tool-chip {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid $border-light;
-            color: $text-secondary;
-            font-size: 0.74rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 4px 9px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s ease;
-            outline: none;
-
-            svg {
-                flex-shrink: 0;
-            }
-
-            &:hover {
-                background: rgba(255, 255, 255, 0.08);
-                color: $text-primary;
-                border-color: $border-hover;
-            }
-
-            &.active {
-                background: rgba($primary-color, 0.15);
-                border-color: rgba($primary-color, 0.45);
-                color: $primary-color;
-            }
-        }
-    }
-
-    /* Drawing Tools Grid (3 columns, 2 rows) */
-    .drawing-tools-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
-
-        .drawing-tool-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid $border-light;
-            border-radius: 10px;
-            padding: 9px 6px;
-            color: $text-secondary;
-            font-size: 0.74rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            outline: none;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-
-            svg {
-                transition: transform 0.2s;
-            }
-
-            &:hover {
-                background: rgba(255, 255, 255, 0.07);
-                color: $text-primary;
-                border-color: $border-hover;
-                transform: translateY(-1px);
-
-                svg {
-                    transform: scale(1.1);
-                }
-            }
-
-            &.active {
-                background: rgba($primary-color, 0.18);
-                border-color: rgba($primary-color, 0.55);
-                color: $text-primary;
-                box-shadow: 0 0 12px rgba($primary-color, 0.25);
-            }
-
-            &.danger:hover {
-                background: rgba(255, 69, 58, 0.12);
-                border-color: rgba(255, 69, 58, 0.4);
-                color: #ff453a;
-            }
-
-            &.danger.active {
-                background: rgba(255, 69, 58, 0.2);
-                border-color: rgba(255, 69, 58, 0.6);
-                color: #ff453a;
-                box-shadow: 0 0 12px rgba(255, 69, 58, 0.3);
-            }
-        }
-    }
 
     /* Color picker row */
     .drawing-color-row {
@@ -1017,83 +901,6 @@ body.ui-hidden {
                     border-color: #ffffff;
                     box-shadow: 0 0 8px var(--chip-color);
                 }
-            }
-        }
-    }
-
-    /* Active drawing mode hint */
-    .drawing-mode-hint {
-        background: rgba(0, 122, 255, 0.12);
-        border: 1px solid rgba(0, 122, 255, 0.3);
-        border-radius: 10px;
-        padding: 8px 12px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        animation: fadeIn 0.3s ease;
-
-        .hint-pulse-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: $primary-color;
-            box-shadow: 0 0 8px $primary-color;
-            animation: pulseDot 1.2s infinite;
-            flex-shrink: 0;
-        }
-
-        .hint-text {
-            font-size: 0.76rem;
-            color: $text-primary;
-            flex: 1;
-            font-weight: 500;
-        }
-
-        .hint-cancel-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: $text-primary;
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 3px 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-
-            &:hover {
-                background: rgba(255, 69, 58, 0.2);
-                border-color: rgba(255, 69, 58, 0.4);
-                color: #ff6961;
-            }
-        }
-    }
-
-    /* Summary bar */
-    .drawn-summary-bar {
-        display: flex;
-        background: rgba(0, 0, 0, 0.25);
-        border: 1px solid $border-light;
-        border-radius: 12px;
-        padding: 8px 12px;
-        justify-content: space-around;
-
-        .summary-metric {
-            text-align: center;
-
-            .metric-label {
-                display: block;
-                font-size: 0.68rem;
-                color: $text-secondary;
-                text-transform: uppercase;
-                letter-spacing: 0.4px;
-                margin-bottom: 2px;
-            }
-
-            .metric-value {
-                font-size: 0.86rem;
-                font-weight: 700;
-                color: #34c759;
-                font-family: monospace;
             }
         }
     }
@@ -1162,11 +969,12 @@ body.ui-hidden {
                 min-width: 0;
 
                 .item-color-dot {
-                    width: 10px;
-                    height: 10px;
+                    width: 12px;
+                    height: 12px;
                     border-radius: 50%;
                     flex-shrink: 0;
-                    box-shadow: 0 0 6px currentColor;
+                    box-sizing: border-box;
+                    transition: all 0.2s ease;
                 }
 
                 .item-info {
@@ -1272,7 +1080,8 @@ body.ui-hidden {
 }
 
 @keyframes pulseDot {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 1;
         transform: scale(1);
     }
@@ -1413,5 +1222,3 @@ body.ui-hidden {
         }
     }
 }
-
-

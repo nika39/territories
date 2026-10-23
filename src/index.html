@@ -59,21 +59,6 @@
 
         <!-- Marked Territories Section -->
         <section class="geoman-section" id="geoman-section">
-            <div class="geoman-header">
-                <div class="geoman-title-group">
-                    <h3>მონიშნული ტერიტორიები</h3>
-                    <span id="drawn-count-badge" class="count-badge">0</span>
-                </div>
-                <button type="button" id="btn-toggle-snapping" class="tool-chip active" title="კუთხეების ავტომატური მიბმა (Snapping)">
-                    <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 3v7a6 6 0 0 0 12 0V3"></path>
-                        <line x1="4" y1="3" x2="8" y2="3"></line>
-                        <line x1="16" y1="3" x2="20" y2="3"></line>
-                    </svg>
-                    <span>მიბმა</span>
-                </button>
-            </div>
-
             <!-- Color Palette for Drawing -->
             <div class="drawing-color-row">
                 <span class="color-row-label">ხატვის ფერი:</span>
@@ -85,6 +70,8 @@
                     <button type="button" class="color-chip" data-color="#af52de" style="--chip-color: #af52de;" title="იისფერი"></button>
                 </div>
             </div>
+
+
 
             <!-- List of Drawn Objects -->
             <div class="drawn-objects-container">
@@ -139,11 +126,12 @@
                 ></textarea>
             </div>
             <div class="geojson-actions">
-                <button type="button" id="btn-draw-geojson" class="action-btn primary">
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <button type="button" id="btn-draw-geojson" class="action-btn primary" title="GeoJSON პოლიგონის დამატება რუკაზე">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    <span>პოლიგონის დამატება</span>
+                    <span>დამატება</span>
                 </button>
                 <button type="button" id="btn-clear-geojson" class="action-btn secondary" title="პოლიგონის გასუფთავება">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">

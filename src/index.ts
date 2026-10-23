@@ -5,7 +5,7 @@ import { MaptilerLayer } from "@maptiler/leaflet-maptilersdk";
 
 // Tbilisi initial coordinates (Avlabari/Isani area)
 const initialCenter: L.LatLngTuple = [41.674333, 44.875718];
-const initialZoom = 17;
+const initialZoom = 18;
 
 // Global map reference and active provider state
 let map: L.Map | null = null;
@@ -53,7 +53,7 @@ const googleStreetLayer = L.tileLayer(
 const yandexLayer = L.tileLayer(
     "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ka_GE&style=tags.any:commercial_services|stylers.visibility:off~tags.any:entrance|stylers.visibility:off~tags.any:road|tags.none:road_1|tags.none:road_2|tags.none:road_3|tags.none:road_4|tags.none:road_5|tags.none:road_6|tags.none:road_7|elements:label.icon|stylers.visibility:off",
     {
-        maxZoom: 19,
+        maxZoom: 20,
         attribution: "&copy; Yandex",
     },
 );
@@ -83,6 +83,7 @@ let drawnItemsGroup: L.FeatureGroup | null = null;
 const trackedShapes = new Map<string, TrackedShape>();
 let activeDrawColor = "#007aff";
 let isSnappingEnabled = true;
+let isDrawnOpaque = false;
 let preservedDrawnGeoJson: GeoJSON.FeatureCollection | null = null;
 
 function escapeHtml(str: string): string {
@@ -94,13 +95,56 @@ function escapeHtml(str: string): string {
         .replace(/'/g, "&#039;");
 }
 
+/**
+ * Darkens a hex color by a specified factor (e.g. 0.32 = 32% darker).
+ */
+function darkenHexColor(hex: string, factor = 0.32): string {
+    const clean = hex.replace("#", "");
+    if (clean.length !== 6 && clean.length !== 3) return hex;
+    const full =
+        clean.length === 3
+            ? clean
+                  .split("")
+                  .map((c) => c + c)
+                  .join("")
+            : clean;
+    const num = parseInt(full, 16);
+    if (isNaN(num)) return hex;
+    const r = Math.max(0, Math.floor(((num >> 16) & 255) * (1 - factor)));
+    const g = Math.max(0, Math.floor(((num >> 8) & 255) * (1 - factor)));
+    const b = Math.max(0, Math.floor((num & 255) * (1 - factor)));
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+/**
+ * Returns a UI specialist curated, slightly more prominent / deeper contour tone
+ * of the inner fill color when opaque mode is enabled.
+ * If opaque mode is disabled, the contour matches the fill color.
+ */
+function getContourColor(fillColor: string): string {
+    if (!isDrawnOpaque) return fillColor;
+    const lower = fillColor.toLowerCase();
+    const curatedPairs: Record<string, string> = {
+        "#007aff": "#004bb5", // ლურჯი
+        "#34c759": "#30b657", // მწვანე
+        "#ff9500": "#b85900", // ნარინჯისფერი
+        "#ff3b30": "#e13930", // წითელი
+        "#af52de": "#6e2096", // იისფერი
+    };
+    if (curatedPairs[lower]) {
+        return curatedPairs[lower];
+    }
+    return darkenHexColor(fillColor, 0.32);
+}
+
 function getGeomanPathOptions(color = activeDrawColor): L.PathOptions {
+    const contour = getContourColor(color);
     return {
-        color: color,
-        weight: 2,
+        color: contour,
+        weight: isDrawnOpaque ? 3 : 2,
         opacity: 1,
         fillColor: color,
-        fillOpacity: 0.35,
+        fillOpacity: isDrawnOpaque ? 1.0 : 0.35,
         fill: true,
         lineCap: "round",
         lineJoin: "round",
@@ -285,20 +329,15 @@ function copySingleShapeGeoJson(id: string): void {
 }
 
 /**
- * Updates the sidebar list and count badge.
+ * Updates the sidebar list of marked territories.
  */
 function updateDrawnShapesUI(): void {
-    const countBadge = document.getElementById("drawn-count-badge");
     const emptyState = document.getElementById("empty-drawn-state");
     const listContainer = document.getElementById("drawn-objects-list");
     const batchActions = document.getElementById("drawn-batch-actions");
 
     const shapes = Array.from(trackedShapes.values());
     const count = shapes.length;
-
-    if (countBadge) {
-        countBadge.textContent = count.toString();
-    }
 
     if (emptyState && listContainer && batchActions) {
         if (count === 0) {
@@ -318,9 +357,14 @@ function updateDrawnShapesUI(): void {
             const card = document.createElement("div");
             card.className = "drawn-item-card";
 
+            const contour = getContourColor(shape.color);
+            const dotStyle = isDrawnOpaque
+                ? `background-color: ${shape.color}; border: 2px solid ${contour};`
+                : `background-color: ${shape.color}; border: 2px solid transparent;`;
+
             card.innerHTML = `
                 <div class="item-left">
-                    <span class="item-color-dot" style="background-color: ${shape.color}; color: ${shape.color};"></span>
+                    <span class="item-color-dot" style="${dotStyle}"></span>
                     <div class="item-info">
                         <span class="item-title" title="${escapeHtml(shape.name)}">${escapeHtml(shape.name)}</span>
                     </div>
@@ -424,7 +468,7 @@ function exportAllDrawnGeoJson(): void {
  * Sets up Leaflet Geoman controls, locales, styles and event listeners on a map instance.
  */
 function setupGeomanOnMap(mapInstance: L.Map): void {
-    // 1. Configure Geoman on-map toolbar (topright under zoom control)
+    // 1. Configure Geoman on-map toolbar (topright)
     mapInstance.pm.addControls({
         position: "topright",
         drawPolygon: true,
@@ -442,16 +486,21 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
         oneBlock: false,
     });
 
-    // 2. Localize Geoman tooltips and actions into Georgian
+    // Ensure Polygon comes first, then Rectangle
+    mapInstance.pm.Toolbar.changeControlOrder([
+        "drawPolygon",
+        "drawRectangle",
+        "editMode",
+        "dragMode",
+        "cutPolygon",
+        "removalMode",
+        "rotateMode",
+    ]);
+
+    // 2. Localize Geoman actions and button titles into Georgian
     mapInstance.pm.setLang(
         "ka" as unknown as L.PM.SupportLocales,
         {
-            tooltips: {
-                firstVertex: "დააჭირეთ პირველი წერტილის დასასმელად",
-                continueLine: "დააჭირეთ შემდეგი წერტილის დასასმელად",
-                finishPoly: "დააჭირეთ პირველ წერტილს ან დასრულებას დასახურად",
-                finishRect: "დააჭირეთ მართკუთხედის დასასრულებლად",
-            },
             actions: {
                 finish: "დასრულება",
                 cancel: "გაუქმება",
@@ -465,28 +514,83 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
                 cutButton: "პოლიგონის ამოჭრა (შიდა ეზო)",
                 deleteButton: "ობიექტების წაშლა",
                 rotateButton: "ობიექტების შემობრუნება",
-                snappingButton: "მიბმის (Snapping) ჩართვა/გამორთვა",
             },
         },
         "en",
     );
 
-    // 3. Set global drawing styles and snapping configuration
+    // 3. Set global drawing styles and snapping configuration (tooltips completely disabled)
     mapInstance.pm.setGlobalOptions({
+        tooltips: false,
         snappable: isSnappingEnabled,
         snapDistance: 16,
         allowSelfIntersection: false,
         templineStyle: {
-            color: activeDrawColor,
+            color: getContourColor(activeDrawColor),
+            weight: isDrawnOpaque ? 3 : 2,
         },
         hintlineStyle: {
-            color: activeDrawColor,
+            color: getContourColor(activeDrawColor),
             dashArray: [5, 5],
         },
         pathOptions: getGeomanPathOptions(activeDrawColor),
     });
 
-    // 4. Create and attach drawn items FeatureGroup
+    // 4. Add custom Opacity and Snapping controls at the end of the right toolbar
+    const GeomanOptionsControl = L.Control.extend({
+        options: {
+            position: "topright" as L.ControlPosition,
+        },
+        onAdd: function () {
+            const container = L.DomUtil.create(
+                "div",
+                "leaflet-pm-toolbar leaflet-bar pm-options-toolbar",
+            );
+
+            container.innerHTML = `
+                <div class="button-container ${isDrawnOpaque ? "active" : ""}" id="map-btn-opaque-container">
+                    <a class="leaflet-buttons-control-button" id="map-btn-toggle-opaque" title="გაუმჭვირვალე შიგთავსი" role="button">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"></path>
+                        </svg>
+                    </a>
+                </div>
+                <div class="button-container ${isSnappingEnabled ? "active" : ""}" id="map-btn-snapping-container">
+                    <a class="leaflet-buttons-control-button" id="map-btn-toggle-snapping" title="კუთხეების მიბმა (Snapping)" role="button">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 3v7a6 6 0 0 0 12 0V3"></path>
+                            <line x1="4" y1="3" x2="8" y2="3"></line>
+                            <line x1="16" y1="3" x2="20" y2="3"></line>
+                        </svg>
+                    </a>
+                </div>
+            `;
+
+            L.DomEvent.disableClickPropagation(container);
+            L.DomEvent.disableScrollPropagation(container);
+
+            container
+                .querySelector("#map-btn-toggle-opaque")
+                ?.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    toggleDrawnOpaque();
+                });
+
+            container
+                .querySelector("#map-btn-toggle-snapping")
+                ?.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    toggleSnapping();
+                });
+
+            return container;
+        },
+    });
+
+    new GeomanOptionsControl().addTo(mapInstance);
+
+    // 5. Create and attach drawn items FeatureGroup
     drawnItemsGroup = L.featureGroup().addTo(mapInstance);
 
     // 5. Restore previously drawn shapes if map was recreated
@@ -535,31 +639,77 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
 }
 
 /**
+ * Toggles opaque fill mode for marked shapes and synchronizes toolbar & map styles.
+ */
+function toggleDrawnOpaque(): void {
+    isDrawnOpaque = !isDrawnOpaque;
+
+    // Update button active state on the on-map toolbar
+    const opaqueContainer = document.getElementById("map-btn-opaque-container");
+    opaqueContainer?.classList.toggle("active", isDrawnOpaque);
+
+    // Update all existing tracked polygons on map
+    for (const shape of trackedShapes.values()) {
+        shape.layer.setStyle(getGeomanPathOptions(shape.color));
+    }
+
+    // Update global options for future drawings
+    if (map) {
+        map.pm.setGlobalOptions({
+            templineStyle: {
+                color: getContourColor(activeDrawColor),
+                weight: isDrawnOpaque ? 3 : 2,
+            },
+            hintlineStyle: {
+                color: getContourColor(activeDrawColor),
+                dashArray: [5, 5],
+            },
+            pathOptions: getGeomanPathOptions(activeDrawColor),
+        });
+    }
+
+    updateDrawnShapesUI();
+
+    showToast(
+        isDrawnOpaque
+            ? "შიგთავსი: გაუმჭვირვალე (კონტური გამოკვეთილია)"
+            : "შიგთავსი: გამჭვირვალე (0.35)",
+    );
+}
+
+/**
+ * Toggles snapping mode for Geoman drawing tools and updates toolbar button state.
+ */
+function toggleSnapping(): void {
+    isSnappingEnabled = !isSnappingEnabled;
+
+    const snappingContainer = document.getElementById(
+        "map-btn-snapping-container",
+    );
+    snappingContainer?.classList.toggle("active", isSnappingEnabled);
+
+    if (map) {
+        map.pm.setGlobalOptions({
+            snappable: isSnappingEnabled,
+        });
+    }
+
+    showToast(
+        isSnappingEnabled
+            ? "მიბმა (Snapping): ჩართულია"
+            : "მიბმა (Snapping): გამორთულია",
+    );
+}
+
+/**
  * Sets up sidebar buttons and tools for Geoman.
  */
 function setupGeomanSidebarControls(): void {
-    const snappingBtn = document.getElementById("btn-toggle-snapping");
     const exportDrawnBtn = document.getElementById("btn-export-drawn-geojson");
     const clearAllDrawnBtn = document.getElementById("btn-clear-all-drawn");
     const colorChips = document.querySelectorAll(
         "#drawing-color-chips .color-chip",
     );
-
-    // Toggle snapping
-    snappingBtn?.addEventListener("click", () => {
-        isSnappingEnabled = !isSnappingEnabled;
-        snappingBtn.classList.toggle("active", isSnappingEnabled);
-        if (map) {
-            map.pm.setGlobalOptions({
-                snappable: isSnappingEnabled,
-            });
-        }
-        showToast(
-            isSnappingEnabled
-                ? "მიბმა (Snapping): ჩართულია"
-                : "მიბმა (Snapping): გამორთულია",
-        );
-    });
 
     // Color picker chips
     colorChips.forEach((chip) => {
@@ -573,9 +723,12 @@ function setupGeomanSidebarControls(): void {
 
             if (map) {
                 map.pm.setGlobalOptions({
-                    templineStyle: { color: activeDrawColor },
+                    templineStyle: {
+                        color: getContourColor(activeDrawColor),
+                        weight: isDrawnOpaque ? 3 : 2,
+                    },
                     hintlineStyle: {
-                        color: activeDrawColor,
+                        color: getContourColor(activeDrawColor),
                         dashArray: [5, 5],
                     },
                     pathOptions: getGeomanPathOptions(activeDrawColor),
@@ -641,13 +794,6 @@ function recreateMap(
         attributionControl: true,
         crs: crs,
     });
-
-    // Add zoom control to top-right
-    L.control
-        .zoom({
-            position: "topright",
-        })
-        .addTo(map);
 
     // Bind coordinate display on move
     map.on("move", () => {
