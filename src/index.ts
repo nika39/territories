@@ -10,6 +10,26 @@ const initialZoom = 17;
 let map: L.Map | null = null;
 let currentProvider = "yandex";
 
+// Active GeoJSON polygon layer and stored data (persists across map recreations)
+let activeGeoJsonLayer: L.GeoJSON | null = null;
+let currentGeoJsonData: Parameters<typeof L.geoJSON>[0] = null;
+
+// Polygon styling state (contour-only vs opaque fill)
+let isOnlyContour = false;
+
+function getPolygonStyle(): L.PathOptions {
+    return {
+        color: "#FF6D70",
+        weight: 2,
+        opacity: 1,
+        fillColor: "#FF3B30",
+        fillOpacity: isOnlyContour ? 0.8 : 1,
+        fill: true,
+        lineCap: "round",
+        lineJoin: "round",
+    };
+}
+
 // Global UI visibility state
 let isUiHidden = false;
 
@@ -20,7 +40,7 @@ const maptilerApiKey: string = process.env.MAPTILER_API_KEY || "";
 // Custom map style ID: 019e9cdf-f7aa-7512-9abc-8773a51fd486
 const maptilerLayer = new MaptilerLayer({
     apiKey: maptilerApiKey,
-    style: "019e9cdf-f7aa-7512-9abc-8773a51fd486",
+    style: "01a120ea-26f0-7a1d-b08e-4c63cf192ffd",
 });
 
 const googleStreetLayer = L.tileLayer(
@@ -65,9 +85,6 @@ function recreateMap(
         zoomControl: false,
         attributionControl: true,
         crs: crs,
-        zoomSnap: 0.5,
-        zoomDelta: 0.5,
-        wheelPxPerZoomLevel: 120,
     });
 
     // Add zoom control to top-right
@@ -108,6 +125,11 @@ function recreateMap(
     const coordDisplay = document.getElementById("coord-display");
     if (coordDisplay) {
         coordDisplay.textContent = `${center[0].toFixed(6)}, ${center[1].toFixed(6)}`;
+    }
+
+    // Re-render active GeoJSON polygon if present
+    if (currentGeoJsonData) {
+        renderGeoJson(currentGeoJsonData, false);
     }
 }
 
@@ -163,14 +185,11 @@ function setupKeyboardShortcuts(): void {
 
         // Use e.code === "KeyH" to ensure it works across all keyboard layouts (Georgian, English, etc.)
         const isHKey =
-            e.code === "KeyH" ||
-            e.key.toLowerCase() === "h" ||
-            e.key === "ჰ";
+            e.code === "KeyH" || e.key.toLowerCase() === "h" || e.key === "ჰ";
 
         if (!isHKey) return;
 
-        const isCmdShiftH =
-            (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
+        const isCmdShiftH = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
         const isSoloH =
             !isInputField &&
             !e.ctrlKey &&
@@ -277,6 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupMapSwitcher();
     setupGlobalSidebarControls();
     setupKeyboardShortcuts();
+    setupGeoJsonControls();
 
     // Fallback load overlay fade-out after 3 seconds
     setTimeout(() => {
@@ -286,3 +306,188 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, 3000);
 });
+
+/**
+ * Renders GeoJSON data onto the active Leaflet map.
+ */
+function renderGeoJson(
+    geoJsonData: Parameters<typeof L.geoJSON>[0],
+    shouldFitBounds = true,
+): { success: boolean; message: string; count: number } {
+    if (!map) {
+        return {
+            success: false,
+            message: "რუკა ჯერ არ არის ინიციალიზებული",
+            count: 0,
+        };
+    }
+
+    // Remove existing GeoJSON layer if present
+    if (activeGeoJsonLayer) {
+        map.removeLayer(activeGeoJsonLayer);
+        activeGeoJsonLayer = null;
+    }
+
+    try {
+        const layer = L.geoJSON(geoJsonData, {
+            style: () => getPolygonStyle(),
+        });
+
+        const layerCount = layer.getLayers().length;
+        if (layerCount === 0) {
+            return {
+                success: false,
+                message: "GeoJSON-ში ვალიდური გეომეტრია ვერ მოიძებნა",
+                count: 0,
+            };
+        }
+
+        layer.addTo(map);
+        activeGeoJsonLayer = layer;
+        currentGeoJsonData = geoJsonData;
+
+        if (shouldFitBounds) {
+            const bounds = layer.getBounds();
+            if (bounds.isValid()) {
+                map.fitBounds(bounds, {
+                    padding: [50, 50],
+                    maxZoom: 18,
+                    animate: true,
+                });
+            }
+        }
+
+        return {
+            success: true,
+            message: `წარმატებით დაემატა (${layerCount} ობიექტი)`,
+            count: layerCount,
+        };
+    } catch (err) {
+        console.error("Failed to render GeoJSON:", err);
+        return {
+            success: false,
+            message: `შეცდომა: ${(err as Error).message || "დამუშავება ვერ მოხერხდა"}`,
+            count: 0,
+        };
+    }
+}
+
+/**
+ * Clears the active GeoJSON layer from the map and resets state.
+ */
+function clearGeoJson(): void {
+    if (activeGeoJsonLayer && map) {
+        map.removeLayer(activeGeoJsonLayer);
+    }
+    activeGeoJsonLayer = null;
+    currentGeoJsonData = null;
+}
+
+/**
+ * Sets up listeners for the GeoJSON polygon section in the sidebar.
+ */
+function setupGeoJsonControls(): void {
+    const input = document.getElementById(
+        "geojson-input",
+    ) as HTMLTextAreaElement | null;
+    const addBtn = document.getElementById(
+        "btn-draw-geojson",
+    ) as HTMLButtonElement | null;
+    const clearBtn = document.getElementById(
+        "btn-clear-geojson",
+    ) as HTMLButtonElement | null;
+    const toggleFillBtn = document.getElementById(
+        "btn-toggle-fill",
+    ) as HTMLButtonElement | null;
+    const feedback = document.getElementById("geojson-feedback");
+
+    const showFeedback = (msg: string, type: "error" | "success" | "none") => {
+        if (!feedback) return;
+        if (type === "none") {
+            feedback.style.display = "none";
+            feedback.className = "geojson-feedback";
+            feedback.textContent = "";
+            return;
+        }
+        feedback.style.display = "flex";
+        feedback.className = `geojson-feedback ${type}`;
+        feedback.textContent = msg;
+    };
+
+    // Toggle fill transparency (only contour vs filled)
+    if (toggleFillBtn) {
+        toggleFillBtn.addEventListener("click", () => {
+            isOnlyContour = !isOnlyContour;
+            toggleFillBtn.classList.toggle("active", isOnlyContour);
+
+            if (activeGeoJsonLayer) {
+                activeGeoJsonLayer.setStyle(getPolygonStyle());
+            }
+
+            showToast(
+                isOnlyContour
+                    ? "გამჭვირვალე შეფერვა (0.8)"
+                    : "გაუმჭვირვალე შეფერვა (1.0)",
+            );
+        });
+    }
+
+    // Add Polygon handler
+    const handleAdd = () => {
+        if (!input) return;
+        const raw = input.value.trim();
+
+        if (!raw) {
+            showFeedback("გთხოვთ შეიყვანოთ GeoJSON ტექსტი", "error");
+            return;
+        }
+
+        let parsed: Parameters<typeof L.geoJSON>[0];
+        try {
+            parsed = JSON.parse(raw);
+        } catch {
+            showFeedback("არასწორი JSON ფორმატი: სინტაქსი მცდარია", "error");
+            return;
+        }
+
+        const res = renderGeoJson(parsed, true);
+        if (res.success) {
+            showFeedback(
+                `✓ პოლიგონი დაემატა (${res.count} ობიექტი)`,
+                "success",
+            );
+            showToast("პოლიგონი დაემატა რუკაზე");
+        } else {
+            showFeedback(`✕ ${res.message}`, "error");
+        }
+    };
+
+    if (addBtn) {
+        addBtn.addEventListener("click", handleAdd);
+    }
+
+    // Support Cmd+Enter or Ctrl+Enter in textarea
+    if (input) {
+        input.addEventListener("keydown", (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                e.preventDefault();
+                handleAdd();
+            }
+        });
+    }
+
+    // Clear polygon handler
+    if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+            clearGeoJson();
+            if (input) {
+                input.value = "";
+            }
+            showFeedback("პოლიგონი გასუფთავებულია", "success");
+            showToast("პოლიგონი წაიშალა");
+            setTimeout(() => {
+                showFeedback("", "none");
+            }, 2000);
+        });
+    }
+}

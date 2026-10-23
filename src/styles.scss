@@ -21,8 +21,6 @@ $font-family:
     padding: 0;
     box-sizing: border-box;
     font-family: $font-family;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
 body,
@@ -66,7 +64,6 @@ html {
 .leaflet-control-zoom-out {
     background: rgba(18, 18, 22, 0.85) !important;
     backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
     color: #ffffff !important;
     border: none !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -92,7 +89,6 @@ html {
     z-index: 10;
     background: $bg-dark-glass;
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border: 1px solid $border-light;
     border-radius: 24px;
     padding: 28px;
@@ -102,6 +98,18 @@ html {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
     animation: slideInSidebar 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
 }
 
 @keyframes slideInSidebar {
@@ -553,7 +561,6 @@ body.ui-hidden {
     z-index: 9999;
     background: rgba(18, 18, 22, 0.9);
     backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
     color: #ffffff;
@@ -572,3 +579,176 @@ body.ui-hidden {
         transform: translateX(-50%) translateY(0);
     }
 }
+
+/* GeoJSON Input Section */
+.geojson-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .geojson-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        h3 {
+            font-size: 0.8rem;
+            color: $text-secondary;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        .toggle-fill-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid $border-light;
+            color: $text-secondary;
+            font-size: 0.74rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 9px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+            outline: none;
+
+            svg {
+                flex-shrink: 0;
+            }
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.08);
+                color: $text-primary;
+                border-color: $border-hover;
+            }
+
+            &.active {
+                background: rgba(255, 59, 48, 0.15);
+                border-color: rgba(255, 109, 112, 0.5);
+                color: #ff6d70;
+            }
+        }
+    }
+
+    .geojson-textarea-wrapper {
+        position: relative;
+        width: 100%;
+
+        textarea {
+            width: 100%;
+            min-height: 90px;
+            max-height: 160px;
+            resize: vertical;
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.32);
+            border: 1px solid $border-light;
+            border-radius: 14px;
+            color: $text-primary;
+            font-size: 0.78rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            line-height: 1.45;
+            outline: none;
+            transition: all 0.25s ease;
+
+            &::placeholder {
+                color: rgba($text-secondary, 0.7);
+                font-family: $font-family;
+                font-size: 0.8rem;
+            }
+
+            &:focus {
+                background: rgba(0, 0, 0, 0.45);
+                border-color: rgba($primary-color, 0.6);
+                box-shadow: 0 0 0 3px rgba($primary-color, 0.15);
+            }
+
+            &::-webkit-scrollbar {
+                width: 4px;
+            }
+            &::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 8px;
+            }
+        }
+    }
+
+    .geojson-actions {
+        display: flex;
+        gap: 8px;
+
+        .action-btn {
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            outline: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+            &.primary {
+                flex: 1;
+                background: linear-gradient(135deg, $primary-color, #0056b3);
+                border: none;
+                color: $text-primary;
+                box-shadow: 0 4px 12px rgba($primary-color, 0.28);
+
+                &:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 6px 18px rgba($primary-color, 0.4);
+                }
+
+                &:active {
+                    transform: translateY(0);
+                }
+            }
+
+            &.secondary {
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid $border-light;
+                color: $text-secondary;
+
+                &:hover {
+                    background: rgba(255, 69, 58, 0.12);
+                    border-color: rgba(255, 69, 58, 0.35);
+                    color: #ff453a;
+                }
+
+                &:active {
+                    transform: translateY(0);
+                }
+            }
+        }
+    }
+
+    .geojson-feedback {
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        word-break: break-word;
+        transition: all 0.3s ease;
+
+        &.error {
+            background: rgba(255, 69, 58, 0.12);
+            border: 1px solid rgba(255, 69, 58, 0.25);
+            color: #ff6961;
+        }
+
+        &.success {
+            background: rgba(52, 199, 89, 0.12);
+            border: 1px solid rgba(52, 199, 89, 0.25);
+            color: #32d74b;
+        }
+    }
+}
+
+
