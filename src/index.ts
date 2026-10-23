@@ -50,13 +50,25 @@ const googleStreetLayer = L.tileLayer(
     },
 );
 
-const yandexLayer = L.tileLayer(
-    "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ka_GE&style=tags.any:commercial_services|stylers.visibility:off~tags.any:entrance|stylers.visibility:off~tags.any:road|tags.none:road_1|tags.none:road_2|tags.none:road_3|tags.none:road_4|tags.none:road_5|tags.none:road_6|tags.none:road_7|elements:label.icon|stylers.visibility:off",
-    {
-        maxZoom: 20,
-        attribution: "&copy; Yandex",
-    },
-);
+export const YANDEX_STYLE_OLD =
+    "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ka_GE&style=" +
+    "tags.any:commercial_services|stylers.visibility:off~" +
+    // "tags.any:entrance|stylers.visibility:off~" +
+    "tags.any:road|tags.none:road_1|tags.none:road_2|tags.none:road_3|tags.none:road_4|tags.none:road_5|tags.none:road_6|tags.none:road_7|elements:label.icon|stylers.visibility:off";
+
+export const YANDEX_STYLE_NEW =
+    "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ka_GE&style=" +
+    "tags.any:poi|tags.none:parking|tags.none:cemetery|stylers.visibility:off~" +
+    "tags.any:entrance|stylers.visibility:off~" +
+    "tags.any:food_and_drink|tags.any:shopping|tags.any:commercial_services|stylers.visibility:off~" +
+    "tags.any:road|tags.none:road_1|tags.none:road_2|tags.none:road_3|tags.none:road_4|tags.none:road_5|tags.none:road_6|tags.none:road_7|elements:label.icon|stylers.visibility:off";
+
+let activeYandexStyle: "old" | "new" = "old";
+
+const yandexLayer = L.tileLayer(YANDEX_STYLE_OLD, {
+    maxZoom: 20,
+    attribution: "&copy; Yandex",
+});
 
 // Store layers in a record
 const layers: Record<string, L.Layer> = {
@@ -910,6 +922,9 @@ function setupKeyboardShortcuts(): void {
 function setupMapSwitcher(): void {
     const buttons = document.querySelectorAll(".switcher-btn");
     const subtitle = document.querySelector(".logo-title .sub-title");
+    const yandexStyleSwitcher = document.getElementById(
+        "yandex-style-switcher",
+    );
 
     buttons.forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -938,7 +953,81 @@ function setupMapSwitcher(): void {
                 }
             }
 
+            if (yandexStyleSwitcher) {
+                yandexStyleSwitcher.style.display =
+                    provider === "yandex" ? "block" : "none";
+            }
+
             currentProvider = provider;
+        });
+    });
+}
+
+/**
+ * Switches between existing and new Yandex style links.
+ */
+function switchYandexStyle(style: "old" | "new"): void {
+    if (activeYandexStyle === style && currentProvider === "yandex") return;
+    activeYandexStyle = style;
+
+    const targetUrl = style === "new" ? YANDEX_STYLE_NEW : YANDEX_STYLE_OLD;
+    yandexLayer.setUrl(targetUrl);
+
+    // Update style buttons state
+    const styleButtons = document.querySelectorAll(".yandex-style-btn");
+    styleButtons.forEach((btn) => {
+        if (btn.getAttribute("data-yandex-style") === style) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+
+    // Update badge text
+    const badge = document.getElementById("yandex-style-badge");
+    if (badge) {
+        badge.textContent = style === "new" ? "გაფილტრული" : "ყველა იარლიყი";
+    }
+
+    // If not currently on Yandex, switch map to Yandex
+    if (currentProvider !== "yandex") {
+        const yandexBtn = document.querySelector(
+            '.switcher-btn[data-provider="yandex"]',
+        ) as HTMLButtonElement | null;
+        if (yandexBtn) {
+            yandexBtn.click();
+        }
+    }
+
+    showToast(
+        style === "new"
+            ? "Yandex: გაფილტრული რეჟიმი (არასაჭირო იარლიყები დამალულია)"
+            : "Yandex: სრული რეჟიმი (ყველა იარლიყი გამოჩენილია)",
+    );
+}
+
+/**
+ * Sets up Yandex style toggle buttons listeners.
+ */
+function setupYandexStyleSwitcher(): void {
+    const yandexStyleSwitcher = document.getElementById(
+        "yandex-style-switcher",
+    );
+    if (yandexStyleSwitcher) {
+        yandexStyleSwitcher.style.display =
+            currentProvider === "yandex" ? "block" : "none";
+    }
+
+    const styleButtons = document.querySelectorAll(".yandex-style-btn");
+    styleButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const style = btn.getAttribute("data-yandex-style") as
+                | "old"
+                | "new"
+                | null;
+            if (style === "old" || style === "new") {
+                switchYandexStyle(style);
+            }
         });
     });
 }
@@ -987,6 +1076,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Set up listeners once
     setupMapSwitcher();
+    setupYandexStyleSwitcher();
     setupGlobalSidebarControls();
     setupKeyboardShortcuts();
     setupGeoJsonControls();

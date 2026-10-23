@@ -100,6 +100,17 @@ html {
     }
 }
 
+@keyframes fadeInYandexSwitcher {
+    0% {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Sidebar Header */
 .sidebar-header {
     display: flex;
@@ -487,6 +498,100 @@ html {
             background: $primary-color;
             color: $text-primary;
             box-shadow: 0 4px 12px $primary-glow;
+        }
+    }
+
+    /* Yandex Style Switcher */
+    .yandex-style-switcher {
+        margin-top: 10px;
+        padding: 9px 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        animation: fadeInYandexSwitcher 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+        .yandex-style-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 7px;
+
+            .yandex-style-title {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 0.7rem;
+                color: $text-secondary;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                font-weight: 600;
+
+                svg {
+                    color: $primary-color;
+                }
+            }
+
+            .yandex-style-badge {
+                font-size: 0.65rem;
+                padding: 1px 6px;
+                border-radius: 10px;
+                background: rgba($primary-color, 0.15);
+                color: #4da3ff;
+                font-weight: 600;
+                letter-spacing: 0.3px;
+            }
+        }
+
+        .yandex-style-buttons {
+            display: flex;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid $border-light;
+            border-radius: 10px;
+            padding: 3px;
+            gap: 3px;
+        }
+
+        .yandex-style-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-radius: 7px;
+            padding: 6px 6px;
+            color: $text-secondary;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none;
+
+            .dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.25);
+                transition: all 0.2s;
+            }
+
+            &:hover {
+                color: $text-primary;
+                background: rgba(255, 255, 255, 0.04);
+            }
+
+            &.active {
+                background: linear-gradient(135deg, $primary-color, #4b52e3);
+                color: #ffffff;
+                box-shadow: 0 2px 8px rgba(0, 122, 255, 0.35);
+
+                .dot {
+                    background: #ffffff;
+                    box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+                }
+            }
         }
     }
 }
