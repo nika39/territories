@@ -10,6 +10,9 @@ const initialZoom = 17;
 let map: L.Map | null = null;
 let currentProvider = "yandex";
 
+// Global UI visibility state
+let isUiHidden = false;
+
 // Define tile layers
 const maptilerApiKey: string = process.env.MAPTILER_API_KEY || "";
 
@@ -30,7 +33,6 @@ const googleStreetLayer = L.tileLayer(
 
 const yandexLayer = L.tileLayer(
     "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ka_GE&style=tags.any:commercial_services|stylers.visibility:off~tags.any:entrance|stylers.visibility:off~tags.any:road|tags.none:road_1|tags.none:road_2|tags.none:road_3|tags.none:road_4|tags.none:road_5|tags.none:road_6|tags.none:road_7|elements:label.icon|stylers.visibility:off",
-    // "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ka_GE&style=tags.any:poi|stylers.visibility:off",
     {
         maxZoom: 19,
         attribution: "&copy; Yandex",
@@ -85,6 +87,9 @@ function recreateMap(
         }
     });
 
+    // Ensure UI visibility class remains consistent on body
+    document.body.classList.toggle("ui-hidden", isUiHidden);
+
     // Attach selected layer
     const layer = layers[provider];
     if (layer) {
@@ -104,6 +109,80 @@ function recreateMap(
     if (coordDisplay) {
         coordDisplay.textContent = `${center[0].toFixed(6)}, ${center[1].toFixed(6)}`;
     }
+}
+
+let toastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Displays a sleek temporary toast for visual feedback when toggling UI.
+ */
+function showToast(message: string): void {
+    let toast = document.getElementById("map-status-toast");
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "map-status-toast";
+        toast.className = "map-status-toast";
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add("visible");
+    if (toastTimeout) {
+        clearTimeout(toastTimeout);
+    }
+    toastTimeout = setTimeout(() => {
+        toast?.classList.remove("visible");
+    }, 1800);
+}
+
+/**
+ * Toggles visibility of UI overlay elements (Sidebar, Zoom controls, Copyright).
+ */
+function toggleUiVisibility(): void {
+    isUiHidden = !isUiHidden;
+    document.body.classList.toggle("ui-hidden", isUiHidden);
+    showToast(
+        isUiHidden
+            ? "ინტერფეისი დამალულია • დააჭირე H-ს გამოსაჩენად"
+            : "ინტერფეისი გამოჩენილია",
+    );
+}
+
+/**
+ * Sets up keyboard shortcuts for toggling UI overlays (Sidebar, Zoom, Copyright).
+ * Supported shortcuts (layout-independent via e.code):
+ * - Cmd + Shift + H (or Ctrl + Shift + H)
+ * - 'h' key (when not focused in an input field)
+ */
+function setupKeyboardShortcuts(): void {
+    window.addEventListener("keydown", (e: KeyboardEvent) => {
+        const target = e.target as HTMLElement | null;
+        const isInputField =
+            target instanceof HTMLInputElement ||
+            target instanceof HTMLTextAreaElement ||
+            target?.isContentEditable;
+
+        // Use e.code === "KeyH" to ensure it works across all keyboard layouts (Georgian, English, etc.)
+        const isHKey =
+            e.code === "KeyH" ||
+            e.key.toLowerCase() === "h" ||
+            e.key === "ჰ";
+
+        if (!isHKey) return;
+
+        const isCmdShiftH =
+            (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
+        const isSoloH =
+            !isInputField &&
+            !e.ctrlKey &&
+            !e.metaKey &&
+            !e.altKey &&
+            !e.shiftKey;
+
+        if (isCmdShiftH || isSoloH) {
+            e.preventDefault();
+            toggleUiVisibility();
+        }
+    });
 }
 
 /**
@@ -197,6 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Set up switcher and global side panel listeners once
     setupMapSwitcher();
     setupGlobalSidebarControls();
+    setupKeyboardShortcuts();
 
     // Fallback load overlay fade-out after 3 seconds
     setTimeout(() => {
