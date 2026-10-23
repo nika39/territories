@@ -57,6 +57,68 @@
             </div>
         </section>
 
+        <!-- Marked Territories Section -->
+        <section class="geoman-section" id="geoman-section">
+            <div class="geoman-header">
+                <div class="geoman-title-group">
+                    <h3>მონიშნული ტერიტორიები</h3>
+                    <span id="drawn-count-badge" class="count-badge">0</span>
+                </div>
+                <button type="button" id="btn-toggle-snapping" class="tool-chip active" title="კუთხეების ავტომატური მიბმა (Snapping)">
+                    <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 3v7a6 6 0 0 0 12 0V3"></path>
+                        <line x1="4" y1="3" x2="8" y2="3"></line>
+                        <line x1="16" y1="3" x2="20" y2="3"></line>
+                    </svg>
+                    <span>მიბმა</span>
+                </button>
+            </div>
+
+            <!-- Color Palette for Drawing -->
+            <div class="drawing-color-row">
+                <span class="color-row-label">ხატვის ფერი:</span>
+                <div class="color-chips" id="drawing-color-chips">
+                    <button type="button" class="color-chip active" data-color="#007aff" style="--chip-color: #007aff;" title="ლურჯი"></button>
+                    <button type="button" class="color-chip" data-color="#34c759" style="--chip-color: #34c759;" title="მწვანე"></button>
+                    <button type="button" class="color-chip" data-color="#ff9500" style="--chip-color: #ff9500;" title="ნარინჯისფერი"></button>
+                    <button type="button" class="color-chip" data-color="#ff3b30" style="--chip-color: #ff3b30;" title="წითელი"></button>
+                    <button type="button" class="color-chip" data-color="#af52de" style="--chip-color: #af52de;" title="იისფერი"></button>
+                </div>
+            </div>
+
+            <!-- List of Drawn Objects -->
+            <div class="drawn-objects-container">
+                <div class="empty-drawn-state" id="empty-drawn-state">
+                    <svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                    <span>მონიშნეთ ტერიტორია მარჯვენა პანელიდან</span>
+                </div>
+                <div class="drawn-objects-list" id="drawn-objects-list" style="display: none;"></div>
+            </div>
+
+            <!-- Batch Actions for Drawn Objects -->
+            <div class="drawn-batch-actions" id="drawn-batch-actions" style="display: none;">
+                <button type="button" id="btn-export-drawn-geojson" class="action-btn-mini primary" title="ყველა მონიშნულის GeoJSON-ის კოპირება">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>GeoJSON ექსპორტი</span>
+                </button>
+                <button type="button" id="btn-clear-all-drawn" class="action-btn-mini danger" title="ყველა მონიშნული ობიექტის წაშლა">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>ყველას წაშლა</span>
+                </button>
+            </div>
+        </section>
+
         <!-- GeoJSON Import Section -->
         <section class="geojson-section">
             <div class="geojson-header">

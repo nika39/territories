@@ -1,4 +1,5 @@
 @import "leaflet/dist/leaflet.css";
+@import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 
 /* Custom Premium Design System */
 $primary-color: #007aff;
@@ -521,7 +522,8 @@ html {
         opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.leaflet-control-zoom {
+.leaflet-control-zoom,
+.leaflet-pm-toolbar {
     transition:
         transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
         opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -538,7 +540,8 @@ body.ui-hidden {
         pointer-events: none !important;
     }
 
-    .leaflet-control-zoom {
+    .leaflet-control-zoom,
+    .leaflet-pm-toolbar {
         transform: translateX(calc(100% + 40px)) scale(0.96) !important;
         opacity: 0 !important;
         pointer-events: none !important;
@@ -747,6 +750,666 @@ body.ui-hidden {
             background: rgba(52, 199, 89, 0.12);
             border: 1px solid rgba(52, 199, 89, 0.25);
             color: #32d74b;
+        }
+    }
+}
+
+/* ==========================================================================
+   Leaflet Geoman Toolbar Styling (Apple-inspired Dark Glassmorphism)
+   ========================================================================== */
+.leaflet-pm-toolbar {
+    margin-right: 24px !important;
+    margin-top: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 14px !important;
+    overflow: hidden;
+    background: rgba(18, 18, 22, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+
+    .button-container {
+        a.leaflet-buttons-control-button {
+            background: transparent !important;
+            border: none !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+            width: 36px !important;
+            height: 36px !important;
+            line-height: 36px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease !important;
+
+            .control-icon {
+                filter: invert(1) brightness(1.7);
+                opacity: 0.85;
+                transition: all 0.2s ease;
+                width: 18px;
+                height: 18px;
+            }
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.08) !important;
+
+                .control-icon {
+                    opacity: 1;
+                    filter: invert(48%) sepia(85%) saturate(3000%) hue-rotate(200deg) brightness(105%) contrast(105%);
+                }
+            }
+        }
+
+        &:last-child a.leaflet-buttons-control-button {
+            border-bottom: none !important;
+        }
+
+        &.active a.leaflet-buttons-control-button {
+            background: rgba(0, 122, 255, 0.22) !important;
+
+            .control-icon {
+                opacity: 1;
+                filter: invert(48%) sepia(85%) saturate(3000%) hue-rotate(200deg) brightness(105%) contrast(105%);
+            }
+        }
+    }
+
+    .leaflet-pm-actions-container {
+        background: rgba(18, 18, 22, 0.94) !important;
+        backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+        margin-right: 10px !important;
+
+        .leaflet-pm-action {
+            background: transparent !important;
+            color: #ffffff !important;
+            font-size: 0.78rem !important;
+            font-weight: 500 !important;
+            padding: 8px 12px !important;
+            height: auto !important;
+            line-height: normal !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+            transition: all 0.2s ease !important;
+
+            &:hover {
+                background: rgba(0, 122, 255, 0.25) !important;
+                color: #ffffff !important;
+            }
+
+            &:last-child {
+                border-right: none !important;
+            }
+        }
+    }
+}
+
+/* ==========================================================================
+   Geoman Section (Sidebar Integration)
+   ========================================================================== */
+.geoman-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid $border-light;
+
+    .geoman-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .geoman-title-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            h3 {
+                font-size: 0.8rem;
+                color: $text-secondary;
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+                font-weight: 600;
+            }
+
+            .count-badge {
+                font-size: 0.72rem;
+                font-weight: 700;
+                color: #ffffff;
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                padding: 1px 7px;
+                border-radius: 10px;
+                min-width: 20px;
+                text-align: center;
+            }
+        }
+
+        .tool-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid $border-light;
+            color: $text-secondary;
+            font-size: 0.74rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 9px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+            outline: none;
+
+            svg {
+                flex-shrink: 0;
+            }
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.08);
+                color: $text-primary;
+                border-color: $border-hover;
+            }
+
+            &.active {
+                background: rgba($primary-color, 0.15);
+                border-color: rgba($primary-color, 0.45);
+                color: $primary-color;
+            }
+        }
+    }
+
+    /* Drawing Tools Grid (3 columns, 2 rows) */
+    .drawing-tools-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+
+        .drawing-tool-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid $border-light;
+            border-radius: 10px;
+            padding: 9px 6px;
+            color: $text-secondary;
+            font-size: 0.74rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+            svg {
+                transition: transform 0.2s;
+            }
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.07);
+                color: $text-primary;
+                border-color: $border-hover;
+                transform: translateY(-1px);
+
+                svg {
+                    transform: scale(1.1);
+                }
+            }
+
+            &.active {
+                background: rgba($primary-color, 0.18);
+                border-color: rgba($primary-color, 0.55);
+                color: $text-primary;
+                box-shadow: 0 0 12px rgba($primary-color, 0.25);
+            }
+
+            &.danger:hover {
+                background: rgba(255, 69, 58, 0.12);
+                border-color: rgba(255, 69, 58, 0.4);
+                color: #ff453a;
+            }
+
+            &.danger.active {
+                background: rgba(255, 69, 58, 0.2);
+                border-color: rgba(255, 69, 58, 0.6);
+                color: #ff453a;
+                box-shadow: 0 0 12px rgba(255, 69, 58, 0.3);
+            }
+        }
+    }
+
+    /* Color picker row */
+    .drawing-color-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 2px;
+
+        .color-row-label {
+            font-size: 0.72rem;
+            color: $text-secondary;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .color-chips {
+            display: flex;
+            gap: 8px;
+
+            .color-chip {
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                background: var(--chip-color);
+                border: 2px solid transparent;
+                cursor: pointer;
+                outline: none;
+                transition: all 0.2s ease;
+                padding: 0;
+
+                &:hover {
+                    transform: scale(1.2);
+                }
+
+                &.active {
+                    transform: scale(1.25);
+                    border-color: #ffffff;
+                    box-shadow: 0 0 8px var(--chip-color);
+                }
+            }
+        }
+    }
+
+    /* Active drawing mode hint */
+    .drawing-mode-hint {
+        background: rgba(0, 122, 255, 0.12);
+        border: 1px solid rgba(0, 122, 255, 0.3);
+        border-radius: 10px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: fadeIn 0.3s ease;
+
+        .hint-pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: $primary-color;
+            box-shadow: 0 0 8px $primary-color;
+            animation: pulseDot 1.2s infinite;
+            flex-shrink: 0;
+        }
+
+        .hint-text {
+            font-size: 0.76rem;
+            color: $text-primary;
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .hint-cancel-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: $text-primary;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: rgba(255, 69, 58, 0.2);
+                border-color: rgba(255, 69, 58, 0.4);
+                color: #ff6961;
+            }
+        }
+    }
+
+    /* Summary bar */
+    .drawn-summary-bar {
+        display: flex;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid $border-light;
+        border-radius: 12px;
+        padding: 8px 12px;
+        justify-content: space-around;
+
+        .summary-metric {
+            text-align: center;
+
+            .metric-label {
+                display: block;
+                font-size: 0.68rem;
+                color: $text-secondary;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                margin-bottom: 2px;
+            }
+
+            .metric-value {
+                font-size: 0.86rem;
+                font-weight: 700;
+                color: #34c759;
+                font-family: monospace;
+            }
+        }
+    }
+
+    /* Drawn objects container */
+    .drawn-objects-container {
+        position: relative;
+        width: 100%;
+
+        .empty-drawn-state {
+            padding: 16px 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: $text-secondary;
+            font-size: 0.76rem;
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px dashed rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+
+            svg {
+                opacity: 0.5;
+            }
+        }
+
+        .drawn-objects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 190px;
+            overflow-y: auto;
+            padding-right: 4px;
+
+            &::-webkit-scrollbar {
+                width: 4px;
+            }
+            &::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 8px;
+            }
+        }
+
+        .drawn-item-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid $border-light;
+            border-radius: 10px;
+            padding: 8px 10px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.06);
+                border-color: $border-hover;
+                transform: translateX(2px);
+            }
+
+            .item-left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex: 1;
+                min-width: 0;
+
+                .item-color-dot {
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    flex-shrink: 0;
+                    box-shadow: 0 0 6px currentColor;
+                }
+
+                .item-info {
+                    display: flex;
+                    flex-direction: column;
+                    min-width: 0;
+
+                    .item-title {
+                        font-size: 0.78rem;
+                        font-weight: 600;
+                        color: $text-primary;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+                    .item-area {
+                        font-size: 0.7rem;
+                        color: #34c759;
+                        font-family: monospace;
+                        font-weight: 500;
+                    }
+                }
+            }
+
+            .item-actions {
+                display: flex;
+                gap: 4px;
+
+                .item-btn {
+                    background: transparent;
+                    border: 1px solid transparent;
+                    color: $text-secondary;
+                    border-radius: 6px;
+                    width: 26px;
+                    height: 26px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.08);
+                        color: $text-primary;
+                        border-color: $border-light;
+                    }
+
+                    &.danger:hover {
+                        background: rgba(255, 69, 58, 0.15);
+                        color: #ff453a;
+                        border-color: rgba(255, 69, 58, 0.3);
+                    }
+                }
+            }
+        }
+    }
+
+    /* Batch actions */
+    .drawn-batch-actions {
+        display: flex;
+        gap: 8px;
+
+        .action-btn-mini {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 10px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            outline: none;
+            transition: all 0.2s ease;
+
+            &.primary {
+                background: rgba($primary-color, 0.15);
+                border: 1px solid rgba($primary-color, 0.4);
+                color: #5ac8fa;
+
+                &:hover {
+                    background: rgba($primary-color, 0.25);
+                    border-color: rgba($primary-color, 0.6);
+                    color: #ffffff;
+                }
+            }
+
+            &.danger {
+                background: rgba(255, 69, 58, 0.1);
+                border: 1px solid rgba(255, 69, 58, 0.3);
+                color: #ff6961;
+
+                &:hover {
+                    background: rgba(255, 69, 58, 0.2);
+                    border-color: rgba(255, 69, 58, 0.5);
+                    color: #ff3b30;
+                }
+            }
+        }
+    }
+}
+
+@keyframes pulseDot {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.4;
+        transform: scale(0.85);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
+   Building Details Popup Styling
+   ========================================================================== */
+.leaflet-popup-content-wrapper {
+    background: rgba(18, 18, 22, 0.92) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+    color: #ffffff !important;
+    padding: 2px !important;
+}
+
+.leaflet-popup-tip {
+    background: rgba(18, 18, 22, 0.92) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.leaflet-popup-close-button {
+    color: #98989d !important;
+    padding: 6px !important;
+    &:hover {
+        color: #ffffff !important;
+    }
+}
+
+.building-popup {
+    padding: 6px;
+    min-width: 200px;
+    font-family: $font-family;
+
+    .building-popup-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+        .building-popup-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: $primary-color;
+            background: rgba($primary-color, 0.12);
+            padding: 2px 7px;
+            border-radius: 6px;
+        }
+
+        .building-popup-id {
+            font-size: 0.72rem;
+            color: $text-secondary;
+            font-weight: 600;
+        }
+    }
+
+    .building-popup-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 10px;
+
+        .popup-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.76rem;
+
+            .stat-name {
+                color: $text-secondary;
+            }
+
+            .stat-val {
+                color: $text-primary;
+                font-weight: 500;
+
+                &.highlight {
+                    color: #34c759;
+                    font-weight: 700;
+                    font-family: monospace;
+                }
+            }
+        }
+    }
+
+    .building-popup-actions {
+        display: flex;
+        gap: 6px;
+
+        .popup-btn {
+            flex: 1;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: all 0.2s ease;
+
+            &.copy-geojson-btn {
+                background: rgba(255, 255, 255, 0.08);
+                color: $text-primary;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.14);
+                }
+            }
+
+            &.delete-btn {
+                background: rgba(255, 69, 58, 0.15);
+                color: #ff6961;
+
+                &:hover {
+                    background: rgba(255, 69, 58, 0.25);
+                    color: #ff3b30;
+                }
+            }
         }
     }
 }
