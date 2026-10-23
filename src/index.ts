@@ -59,7 +59,7 @@ export const YANDEX_STYLE_OLD =
 export const YANDEX_STYLE_NEW =
     "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ka_GE&style=" +
     "tags.any:poi|tags.none:parking|tags.none:cemetery|stylers.visibility:off~" +
-    "tags.any:entrance|stylers.visibility:off~" +
+    // "tags.any:entrance|stylers.visibility:off~" +
     "tags.any:food_and_drink|tags.any:shopping|tags.any:commercial_services|stylers.visibility:off~" +
     "tags.any:road|tags.none:road_1|tags.none:road_2|tags.none:road_3|tags.none:road_4|tags.none:road_5|tags.none:road_6|tags.none:road_7|elements:label.icon|stylers.visibility:off";
 
@@ -83,11 +83,11 @@ const layers: Record<string, L.Layer> = {
 
 interface TrackedShape {
     id: string;
-    layer: L.Polygon;
-    shapeType: "Polygon" | "Rectangle";
+    layer: L.Polygon | L.Marker;
+    shapeType: "Polygon" | "Rectangle" | "Marker";
     name: string;
-    area: number; // in square meters
-    perimeter: number; // in meters
+    area: number; // in square meters (0 for Marker)
+    perimeter: number; // in meters (0 for Marker)
     color: string;
 }
 
@@ -212,14 +212,21 @@ function calculatePolygonPerimeter(latlngs: L.LatLng[]): number {
 }
 
 /**
- * Re-indexes all tracked shapes sequentially (ტერიტორია #1, ტერიტორია #2, ...)
- * so that numbering never skips and always stays in order.
+ * Re-indexes all tracked shapes sequentially:
+ * Polygons/Rectangles: ტერიტორია #1, ტერიტორია #2...
+ * Pins/Markers: პინი #1, პინი #2...
  */
 function reindexTrackedShapes(): void {
-    let idx = 1;
+    let polyIdx = 1;
+    let pinIdx = 1;
     for (const shape of trackedShapes.values()) {
-        shape.name = `ტერიტორია #${idx}`;
-        idx++;
+        if (shape.shapeType === "Marker") {
+            shape.name = `პინი #${pinIdx}`;
+            pinIdx++;
+        } else {
+            shape.name = `ტერიტორია #${polyIdx}`;
+            polyIdx++;
+        }
     }
 }
 
@@ -280,6 +287,82 @@ function registerDrawnLayer(
         const updatedLatLngs = getPolygonLatLngs(layer);
         shape.area = calculatePolygonArea(updatedLatLngs);
         shape.perimeter = calculatePolygonPerimeter(updatedLatLngs);
+        updateDrawnShapesUI();
+    });
+
+    updateDrawnShapesUI();
+    return shape;
+}
+
+/**
+ * Creates custom high-visibility vector SVG pin marker icon.
+ * Designed with a white outer border + drop shadow for maximum contrast
+ * on any map tile or building roof in screenshots.
+ */
+function createPinIcon(color = activeDrawColor): L.DivIcon {
+    return L.divIcon({
+        className: "building-pin-wrapper",
+        html: `
+            <div class="building-pin" style="--pin-color: ${color};">
+                <svg viewBox="0 0 34 44" width="49" height="63" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17 2C9.268 2 3 8.268 3 16C3 26.5 17 41 17 41C17 41 31 26.5 31 16C31 8.268 24.732 2 17 2Z" 
+                          fill="${color}" 
+                          stroke="#FFFFFF" 
+                          stroke-width="2.4" 
+                          stroke-linejoin="round"/>
+                    <circle cx="17" cy="16" r="6.2" fill="#FFFFFF"/>
+                    <circle cx="17" cy="16" r="3" fill="${color}"/>
+                </svg>
+            </div>
+        `,
+        iconSize: [49, 63],
+        iconAnchor: [24.5, 59],
+    });
+}
+
+/**
+ * Registers a newly created or restored building marker (Pin) in the tracking system.
+ */
+function registerDrawnMarker(
+    marker: L.Marker,
+    customColor?: string,
+    existingId?: string,
+    customName?: string,
+): TrackedShape {
+    const id =
+        existingId ||
+        `pin_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const color = customColor || activeDrawColor;
+
+    marker.setIcon(createPinIcon(color));
+    if (marker.dragging) {
+        marker.dragging.enable();
+    }
+
+    const shape: TrackedShape = {
+        id,
+        layer: marker,
+        shapeType: "Marker",
+        name: customName || `პინი #${trackedShapes.size + 1}`,
+        area: 0,
+        perimeter: 0,
+        color,
+    };
+
+    trackedShapes.set(id, shape);
+    if (drawnItemsGroup && !drawnItemsGroup.hasLayer(marker)) {
+        drawnItemsGroup.addLayer(marker);
+    }
+
+    reindexTrackedShapes();
+
+    // Right-click directly on pin deletes it immediately
+    marker.on("contextmenu", (e) => {
+        L.DomEvent.stopPropagation(e);
+        deleteTrackedShape(id);
+    });
+
+    marker.on("dragend", () => {
         updateDrawnShapesUI();
     });
 
@@ -374,15 +457,25 @@ function updateDrawnShapesUI(): void {
                 ? `background-color: ${shape.color}; border: 2px solid ${contour};`
                 : `background-color: ${shape.color}; border: 2px solid transparent;`;
 
+            const iconHtml =
+                shape.shapeType === "Marker"
+                    ? `<span class="item-pin-icon" style="color: ${shape.color};">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                            <circle cx="12" cy="9" r="2.5" fill="#ffffff"/>
+                        </svg>
+                    </span>`
+                    : `<span class="item-color-dot" style="${dotStyle}"></span>`;
+
             card.innerHTML = `
                 <div class="item-left">
-                    <span class="item-color-dot" style="${dotStyle}"></span>
+                    ${iconHtml}
                     <div class="item-info">
                         <span class="item-title" title="${escapeHtml(shape.name)}">${escapeHtml(shape.name)}</span>
                     </div>
                 </div>
                 <div class="item-actions">
-                    <button type="button" class="item-btn focus-btn" title="ტერიტორიის ნახვა რუკაზე">
+                    <button type="button" class="item-btn focus-btn" title="ობიექტის ნახვა რუკაზე">
                         <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -403,17 +496,28 @@ function updateDrawnShapesUI(): void {
                 </div>
             `;
 
-            // Focus on territory without opening any popup
+            // Focus on territory or pin without opening any popup
             card.querySelector(".focus-btn")?.addEventListener("click", () => {
                 if (!map) return;
-                const bounds = shape.layer.getBounds();
-                if (bounds.isValid()) {
-                    map.fitBounds(bounds, {
-                        padding: [80, 80],
-                        maxZoom: 19,
-                        animate: true,
-                    });
+                if (shape.layer instanceof L.Marker) {
+                    map.flyTo(
+                        shape.layer.getLatLng(),
+                        Math.max(map.getZoom(), 19),
+                        {
+                            duration: 1.0,
+                        },
+                    );
                     showToast(shape.name);
+                } else {
+                    const bounds = shape.layer.getBounds();
+                    if (bounds.isValid()) {
+                        map.fitBounds(bounds, {
+                            padding: [80, 80],
+                            maxZoom: 19,
+                            animate: true,
+                        });
+                        showToast(shape.name);
+                    }
                 }
             });
 
@@ -485,12 +589,12 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
         position: "topright",
         drawPolygon: true,
         drawRectangle: true,
+        drawMarker: true,
         editMode: true,
         dragMode: true,
         cutPolygon: true,
         removalMode: true,
         rotateMode: true,
-        drawMarker: false,
         drawCircleMarker: false,
         drawPolyline: false,
         drawCircle: false,
@@ -498,10 +602,11 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
         oneBlock: false,
     });
 
-    // Ensure Polygon comes first, then Rectangle
+    // Ensure Polygon comes first, then Rectangle, then Pin Marker
     mapInstance.pm.Toolbar.changeControlOrder([
         "drawPolygon",
         "drawRectangle",
+        "drawMarker",
         "editMode",
         "dragMode",
         "cutPolygon",
@@ -521,6 +626,7 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
             buttonTitles: {
                 drawPolyButton: "პოლიგონის დახაზვა (შენობა / არეალი)",
                 drawRectButton: "მართკუთხედის დახაზვა",
+                drawMarkerButton: "პინის დასმა (შენობის / კორპუსის მონიშვნა)",
                 editButton: "ობიექტების რედაქტირება",
                 dragButton: "ობიექტების გადაადგილება",
                 cutButton: "პოლიგონის ამოჭრა (შიდა ეზო)",
@@ -531,12 +637,13 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
         "en",
     );
 
-    // 3. Set global drawing styles and snapping configuration (tooltips completely disabled)
+    // 3. Set global drawing styles, marker styles, and snapping configuration
     mapInstance.pm.setGlobalOptions({
         tooltips: false,
         snappable: isSnappingEnabled,
         snapDistance: 16,
         allowSelfIntersection: false,
+        continueDrawing: false,
         templineStyle: {
             color: getContourColor(activeDrawColor),
             weight: isDrawnOpaque ? 3 : 2,
@@ -546,6 +653,10 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
             dashArray: [5, 5],
         },
         pathOptions: getGeomanPathOptions(activeDrawColor),
+        markerStyle: {
+            icon: createPinIcon(activeDrawColor),
+            draggable: true,
+        },
     });
 
     // 4. Add custom Opacity and Snapping controls at the end of the right toolbar
@@ -605,39 +716,55 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
     // 5. Create and attach drawn items FeatureGroup
     drawnItemsGroup = L.featureGroup().addTo(mapInstance);
 
-    // 5. Restore previously drawn shapes if map was recreated
+    // 5. Restore previously drawn shapes & pins if map was recreated
     if (preservedDrawnGeoJson && preservedDrawnGeoJson.features.length > 0) {
         trackedShapes.clear();
         preservedDrawnGeoJson.features.forEach((feature) => {
-            const tempLayer = L.geoJSON(feature, {
-                style: () =>
-                    getGeomanPathOptions(
-                        feature.properties?.color || activeDrawColor,
-                    ),
-            });
-            const sublayer = tempLayer.getLayers()[0] as L.Polygon | undefined;
-            if (sublayer) {
-                const shapeType =
-                    feature.properties?.shapeType === "Rectangle"
-                        ? "Rectangle"
-                        : "Polygon";
-                const color = feature.properties?.color || activeDrawColor;
-                registerDrawnLayer(
-                    sublayer,
-                    shapeType,
-                    feature.properties?.id,
-                    color,
-                );
+            const shapeType = feature.properties?.shapeType;
+            const color = feature.properties?.color || activeDrawColor;
+            const existingId = feature.properties?.id;
+            const customName = feature.properties?.name;
+
+            if (shapeType === "Marker" || feature.geometry.type === "Point") {
+                const coords = (feature.geometry as GeoJSON.Point).coordinates;
+                const marker = L.marker([coords[1], coords[0]], {
+                    icon: createPinIcon(color),
+                    draggable: true,
+                });
+                registerDrawnMarker(marker, color, existingId, customName);
+            } else {
+                const tempLayer = L.geoJSON(feature, {
+                    style: () => getGeomanPathOptions(color),
+                });
+                const sublayer = tempLayer.getLayers()[0] as
+                    | L.Polygon
+                    | undefined;
+                if (sublayer) {
+                    registerDrawnLayer(
+                        sublayer,
+                        shapeType === "Rectangle" ? "Rectangle" : "Polygon",
+                        existingId,
+                        color,
+                    );
+                }
             }
         });
     }
 
     // 6. Map event bindings for Geoman
     mapInstance.on("pm:create", (e) => {
-        const shapeType = e.shape === "Rectangle" ? "Rectangle" : "Polygon";
-        const layer = e.layer as L.Polygon;
-        const shape = registerDrawnLayer(layer, shapeType);
-        showToast(`${shape.name} მოინიშნა`);
+        if (e.shape === "Marker") {
+            const marker = e.layer as L.Marker;
+            const shape = registerDrawnMarker(marker, activeDrawColor);
+            showToast(`${shape.name} დაისვა`);
+            // Automatically exit marker drawing mode after placing 1 pin
+            mapInstance.pm.disableDraw();
+        } else {
+            const shapeType = e.shape === "Rectangle" ? "Rectangle" : "Polygon";
+            const layer = e.layer as L.Polygon;
+            const shape = registerDrawnLayer(layer, shapeType);
+            showToast(`${shape.name} მოინიშნა`);
+        }
     });
 
     mapInstance.on("pm:remove", (e) => {
@@ -662,7 +789,9 @@ function toggleDrawnOpaque(): void {
 
     // Update all existing tracked polygons on map
     for (const shape of trackedShapes.values()) {
-        shape.layer.setStyle(getGeomanPathOptions(shape.color));
+        if (shape.layer instanceof L.Polygon) {
+            shape.layer.setStyle(getGeomanPathOptions(shape.color));
+        }
     }
 
     // Update global options for future drawings
@@ -744,6 +873,10 @@ function setupGeomanSidebarControls(): void {
                         dashArray: [5, 5],
                     },
                     pathOptions: getGeomanPathOptions(activeDrawColor),
+                    markerStyle: {
+                        icon: createPinIcon(activeDrawColor),
+                        draggable: true,
+                    },
                 });
             }
         });
