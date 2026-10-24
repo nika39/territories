@@ -151,47 +151,6 @@ html {
     }
 }
 
-/* Search Bar */
-.search-section {
-    margin: 20px 0 10px 0;
-
-    .search-wrapper {
-        position: relative;
-        width: 100%;
-
-        .search-icon {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: $text-secondary;
-            display: flex;
-            align-items: center;
-        }
-
-        input {
-            width: 100%;
-            padding: 14px 14px 14px 44px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid $border-light;
-            border-radius: 14px;
-            color: $text-primary;
-            font-size: 0.88rem;
-            outline: none;
-            transition: all 0.3s ease;
-
-            &::placeholder {
-                color: $text-secondary;
-            }
-
-            &:focus {
-                background: rgba(255, 255, 255, 0.08);
-                border-color: rgba($primary-color, 0.6);
-                box-shadow: 0 0 0 3px rgba($primary-color, 0.15);
-            }
-        }
-    }
-}
 
 /* Stats Section */
 .stats-section {
