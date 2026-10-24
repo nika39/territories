@@ -123,6 +123,8 @@ function getContourColor(fillColor: string): string {
         "#ff9500": "#b85900", // ნარინჯისფერი
         "#ff3b30": "#e13930", // წითელი
         "#af52de": "#6e2096", // იისფერი
+        "#ffcc00": "#b38f00", // ყვითელი
+        "#5ac8fa": "#008ac7", // ცისფერი
     };
     if (curatedPairs[lower]) {
         return curatedPairs[lower];
@@ -1236,7 +1238,7 @@ document.addEventListener("DOMContentLoaded", () => {
  * Extracts color hex or string from GeoJSON properties if present.
  */
 function extractColorFromProperties(
-    props: Record<string, any> | null | undefined,
+    props: Record<string, unknown> | null | undefined,
 ): string {
     if (!props) return activeDrawColor;
     const candidate =
@@ -1259,7 +1261,7 @@ function extractColorFromProperties(
  * Extracts custom title/name from GeoJSON properties if present.
  */
 function extractNameFromProperties(
-    props: Record<string, any> | null | undefined,
+    props: Record<string, unknown> | null | undefined,
 ): string | undefined {
     if (!props) return undefined;
     const candidate = props.name || props.title || props.label;
@@ -1274,18 +1276,26 @@ function extractNameFromProperties(
  * Fully compatible with geojson.io, FeatureCollection, single Feature,
  * array of features, or direct geometry objects (Polygon, MultiPolygon, Point).
  */
-function parseGeoJsonFeatures(data: any): GeoJSON.Feature[] {
+function parseGeoJsonFeatures(data: unknown): GeoJSON.Feature[] {
     if (!data || typeof data !== "object") return [];
 
+    const obj = data as Record<string, unknown>;
+
     // 1. FeatureCollection
-    if (data.type === "FeatureCollection" && Array.isArray(data.features)) {
-        return data.features.filter(
-            (f: any) => f && typeof f === "object" && f.geometry,
+    if (obj.type === "FeatureCollection" && Array.isArray(obj.features)) {
+        return obj.features.filter(
+            (f: unknown): f is GeoJSON.Feature =>
+                Boolean(
+                    f &&
+                        typeof f === "object" &&
+                        "geometry" in f &&
+                        (f as { geometry: unknown }).geometry,
+                ),
         );
     }
 
     // 2. Single Feature
-    if (data.type === "Feature" && data.geometry) {
+    if (obj.type === "Feature" && obj.geometry) {
         return [data as GeoJSON.Feature];
     }
 
@@ -1293,26 +1303,29 @@ function parseGeoJsonFeatures(data: any): GeoJSON.Feature[] {
     if (Array.isArray(data)) {
         const result: GeoJSON.Feature[] = [];
         for (const item of data) {
-            if (item && item.type === "Feature" && item.geometry) {
-                result.push(item);
-            } else if (item && item.type && item.coordinates) {
-                result.push({
-                    type: "Feature",
-                    properties: {},
-                    geometry: item,
-                });
+            if (item && typeof item === "object") {
+                const itemObj = item as Record<string, unknown>;
+                if (itemObj.type === "Feature" && itemObj.geometry) {
+                    result.push(item as GeoJSON.Feature);
+                } else if (itemObj.type && itemObj.coordinates) {
+                    result.push({
+                        type: "Feature",
+                        properties: {},
+                        geometry: item as GeoJSON.Geometry,
+                    });
+                }
             }
         }
         return result;
     }
 
     // 4. Direct geometry object (Polygon, MultiPolygon, Point, etc.)
-    if (data.type && data.coordinates) {
+    if (obj.type && obj.coordinates) {
         return [
             {
                 type: "Feature",
                 properties: {},
-                geometry: data,
+                geometry: data as GeoJSON.Geometry,
             },
         ];
     }
@@ -1348,7 +1361,7 @@ function restoreGeoJson(
     const addedShapes: TrackedShape[] = [];
 
     for (const feat of features) {
-        const props = (feat.properties || {}) as Record<string, any>;
+        const props = (feat.properties || {}) as Record<string, unknown>;
         const geom = feat.geometry;
         if (!geom) continue;
 
