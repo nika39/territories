@@ -11,25 +11,6 @@ const initialZoom = 16;
 let map: L.Map | null = null;
 let currentProvider = "yandex";
 
-// Active GeoJSON polygon layer and stored data (persists across map recreations)
-let activeGeoJsonLayer: L.GeoJSON | null = null;
-let currentGeoJsonData: Parameters<typeof L.geoJSON>[0] = null;
-
-// Polygon styling state for imported GeoJSON (contour-only vs opaque fill)
-let isOnlyContour = false;
-
-function getPolygonStyle(): L.PathOptions {
-    return {
-        color: "#FF6D70",
-        weight: 2,
-        opacity: 1,
-        fillColor: "#FF3B30",
-        fillOpacity: isOnlyContour ? 0.8 : 1,
-        fill: true,
-        lineCap: "round",
-        lineJoin: "round",
-    };
-}
 
 // Global UI visibility state
 let isUiHidden = false;
@@ -167,6 +148,9 @@ function getPolygonLatLngs(layer: L.Polygon): L.LatLng[] {
     const latlngs = layer.getLatLngs();
     if (Array.isArray(latlngs)) {
         if (Array.isArray(latlngs[0])) {
+            if (Array.isArray(latlngs[0][0])) {
+                return latlngs[0][0] as L.LatLng[];
+            }
             return latlngs[0] as L.LatLng[];
         }
         return latlngs as L.LatLng[];
@@ -221,10 +205,14 @@ function reindexTrackedShapes(): void {
     let pinIdx = 1;
     for (const shape of trackedShapes.values()) {
         if (shape.shapeType === "Marker") {
-            shape.name = `პინი #${pinIdx}`;
+            if (!shape.name || /^პინი #\d+$/.test(shape.name)) {
+                shape.name = `პინი #${pinIdx}`;
+            }
             pinIdx++;
         } else {
-            shape.name = `ტერიტორია #${polyIdx}`;
+            if (!shape.name || /^ტერიტორია #\d+$/.test(shape.name)) {
+                shape.name = `ტერიტორია #${polyIdx}`;
+            }
             polyIdx++;
         }
     }
@@ -238,10 +226,12 @@ function registerDrawnLayer(
     shapeType: "Polygon" | "Rectangle",
     existingId?: string,
     customColor?: string,
+    customName?: string,
 ): TrackedShape {
     const id =
-        existingId ||
-        `bld_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        existingId && !trackedShapes.has(existingId)
+            ? existingId
+            : `bld_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const color = customColor || activeDrawColor;
 
     const latlngs = getPolygonLatLngs(layer);
@@ -254,7 +244,7 @@ function registerDrawnLayer(
         id,
         layer,
         shapeType,
-        name: `ტერიტორია #${trackedShapes.size + 1}`,
+        name: customName || `ტერიტორია #${trackedShapes.size + 1}`,
         area,
         perimeter,
         color,
@@ -330,8 +320,9 @@ function registerDrawnMarker(
     customName?: string,
 ): TrackedShape {
     const id =
-        existingId ||
-        `pin_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        existingId && !trackedShapes.has(existingId)
+            ? existingId
+            : `pin_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const color = customColor || activeDrawColor;
 
     marker.setIcon(createPinIcon(color));
@@ -720,36 +711,7 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
     // 5. Restore previously drawn shapes & pins if map was recreated
     if (preservedDrawnGeoJson && preservedDrawnGeoJson.features.length > 0) {
         trackedShapes.clear();
-        preservedDrawnGeoJson.features.forEach((feature) => {
-            const shapeType = feature.properties?.shapeType;
-            const color = feature.properties?.color || activeDrawColor;
-            const existingId = feature.properties?.id;
-            const customName = feature.properties?.name;
-
-            if (shapeType === "Marker" || feature.geometry.type === "Point") {
-                const coords = (feature.geometry as GeoJSON.Point).coordinates;
-                const marker = L.marker([coords[1], coords[0]], {
-                    icon: createPinIcon(color),
-                    draggable: true,
-                });
-                registerDrawnMarker(marker, color, existingId, customName);
-            } else {
-                const tempLayer = L.geoJSON(feature, {
-                    style: () => getGeomanPathOptions(color),
-                });
-                const sublayer = tempLayer.getLayers()[0] as
-                    | L.Polygon
-                    | undefined;
-                if (sublayer) {
-                    registerDrawnLayer(
-                        sublayer,
-                        shapeType === "Rectangle" ? "Rectangle" : "Polygon",
-                        existingId,
-                        color,
-                    );
-                }
-            }
-        });
+        restoreGeoJson(preservedDrawnGeoJson, false);
     }
 
     // 6. Map event bindings for Geoman
@@ -965,10 +927,7 @@ function recreateMap(
 
 
 
-    // Re-render active GeoJSON polygon if present
-    if (currentGeoJsonData) {
-        renderGeoJson(currentGeoJsonData, false);
-    }
+
 }
 
 let toastTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -1269,14 +1228,107 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3000);
 });
 
+// ============================================================================
+// GeoJSON Import & Restoration Engine
+// ============================================================================
+
 /**
- * Renders GeoJSON data onto the active Leaflet map.
+ * Extracts color hex or string from GeoJSON properties if present.
  */
-function renderGeoJson(
-    geoJsonData: Parameters<typeof L.geoJSON>[0],
+function extractColorFromProperties(
+    props: Record<string, any> | null | undefined,
+): string {
+    if (!props) return activeDrawColor;
+    const candidate =
+        props.color ||
+        props.fill ||
+        props.stroke ||
+        props["marker-color"] ||
+        props["marker_color"];
+    if (typeof candidate === "string" && candidate.trim()) {
+        const trimmed = candidate.trim();
+        if (/^#([0-9a-fA-F]{3}){1,2}$/.test(trimmed)) {
+            return trimmed;
+        }
+        return trimmed;
+    }
+    return activeDrawColor;
+}
+
+/**
+ * Extracts custom title/name from GeoJSON properties if present.
+ */
+function extractNameFromProperties(
+    props: Record<string, any> | null | undefined,
+): string | undefined {
+    if (!props) return undefined;
+    const candidate = props.name || props.title || props.label;
+    if (typeof candidate === "string" && candidate.trim()) {
+        return candidate.trim();
+    }
+    return undefined;
+}
+
+/**
+ * Parses raw JSON / object into an array of GeoJSON Features.
+ * Fully compatible with geojson.io, FeatureCollection, single Feature,
+ * array of features, or direct geometry objects (Polygon, MultiPolygon, Point).
+ */
+function parseGeoJsonFeatures(data: any): GeoJSON.Feature[] {
+    if (!data || typeof data !== "object") return [];
+
+    // 1. FeatureCollection
+    if (data.type === "FeatureCollection" && Array.isArray(data.features)) {
+        return data.features.filter(
+            (f: any) => f && typeof f === "object" && f.geometry,
+        );
+    }
+
+    // 2. Single Feature
+    if (data.type === "Feature" && data.geometry) {
+        return [data as GeoJSON.Feature];
+    }
+
+    // 3. Array of Features or Geometries
+    if (Array.isArray(data)) {
+        const result: GeoJSON.Feature[] = [];
+        for (const item of data) {
+            if (item && item.type === "Feature" && item.geometry) {
+                result.push(item);
+            } else if (item && item.type && item.coordinates) {
+                result.push({
+                    type: "Feature",
+                    properties: {},
+                    geometry: item,
+                });
+            }
+        }
+        return result;
+    }
+
+    // 4. Direct geometry object (Polygon, MultiPolygon, Point, etc.)
+    if (data.type && data.coordinates) {
+        return [
+            {
+                type: "Feature",
+                properties: {},
+                geometry: data,
+            },
+        ];
+    }
+
+    return [];
+}
+
+/**
+ * Restores GeoJSON data directly into tracked shapes and pins.
+ * Fully preserves color, coordinates, name, and ID as if drawn by the user.
+ */
+function restoreGeoJson(
+    geoJsonData: unknown,
     shouldFitBounds = true,
 ): { success: boolean; message: string; count: number } {
-    if (!map) {
+    if (!map || !drawnItemsGroup) {
         return {
             success: false,
             message: "რუკა ჯერ არ არის ინიციალიზებული",
@@ -1284,75 +1336,134 @@ function renderGeoJson(
         };
     }
 
-    if (activeGeoJsonLayer) {
-        map.removeLayer(activeGeoJsonLayer);
-        activeGeoJsonLayer = null;
+    const features = parseGeoJsonFeatures(geoJsonData);
+    if (features.length === 0) {
+        return {
+            success: false,
+            message: "GeoJSON-ში ვალიდური გეომეტრია ვერ მოიძებნა",
+            count: 0,
+        };
     }
 
-    try {
-        const layer = L.geoJSON(geoJsonData, {
-            style: () => getPolygonStyle(),
-            onEachFeature: (_, featureLayer) => {
-                const pathLayer = featureLayer as L.Path;
-                if (pathLayer.pm) {
-                    pathLayer.pm.enable();
-                    pathLayer.pm.disable();
-                }
-            },
-        });
+    const addedShapes: TrackedShape[] = [];
 
-        const layerCount = layer.getLayers().length;
-        if (layerCount === 0) {
-            return {
-                success: false,
-                message: "GeoJSON-ში ვალიდური გეომეტრია ვერ მოიძებნა",
-                count: 0,
-            };
+    for (const feat of features) {
+        const props = (feat.properties || {}) as Record<string, any>;
+        const geom = feat.geometry;
+        if (!geom) continue;
+
+        const color = extractColorFromProperties(props);
+        const name = extractNameFromProperties(props);
+        const existingId =
+            typeof props.id === "string" && props.id ? props.id : undefined;
+
+        // 1. Point -> Pin / Marker
+        if (geom.type === "Point") {
+            const coords = (geom as GeoJSON.Point).coordinates;
+            if (!Array.isArray(coords) || coords.length < 2) continue;
+            const lng = Number(coords[0]);
+            const lat = Number(coords[1]);
+            if (isNaN(lng) || isNaN(lat)) continue;
+
+            const marker = L.marker([lat, lng], {
+                icon: createPinIcon(color),
+                draggable: true,
+            });
+            const shape = registerDrawnMarker(marker, color, existingId, name);
+            addedShapes.push(shape);
+            continue;
         }
 
-        layer.addTo(map);
-        activeGeoJsonLayer = layer;
-        currentGeoJsonData = geoJsonData;
+        // 2. Polygon, MultiPolygon or other 2D geometries
+        const tempLayer = L.geoJSON(feat, {
+            style: () => getGeomanPathOptions(color),
+        });
 
-        if (shouldFitBounds) {
-            const bounds = layer.getBounds();
-            if (bounds.isValid()) {
+        const sublayers = tempLayer.getLayers();
+        for (const sub of sublayers) {
+            if (sub instanceof L.Polygon) {
+                tempLayer.removeLayer(sub);
+                const shapeType: "Polygon" | "Rectangle" =
+                    props.shapeType === "Rectangle" ? "Rectangle" : "Polygon";
+                const shape = registerDrawnLayer(
+                    sub,
+                    shapeType,
+                    existingId,
+                    color,
+                    name,
+                );
+                addedShapes.push(shape);
+            } else if (sub instanceof L.Marker) {
+                tempLayer.removeLayer(sub);
+                const latlng = sub.getLatLng();
+                const marker = L.marker(latlng, {
+                    icon: createPinIcon(color),
+                    draggable: true,
+                });
+                const shape = registerDrawnMarker(
+                    marker,
+                    color,
+                    existingId,
+                    name,
+                );
+                addedShapes.push(shape);
+            }
+        }
+    }
+
+    if (addedShapes.length === 0) {
+        return {
+            success: false,
+            message: "GeoJSON-ში ვალიდური პოლიგონი ან პინი ვერ მოიძებნა",
+            count: 0,
+        };
+    }
+
+    // Animate map camera to encompass newly restored items
+    if (shouldFitBounds && map) {
+        const bounds = L.latLngBounds([]);
+        addedShapes.forEach((s) => {
+            if (s.layer instanceof L.Marker) {
+                bounds.extend(s.layer.getLatLng());
+            } else if (s.layer instanceof L.Polygon) {
+                bounds.extend(s.layer.getBounds());
+            }
+        });
+
+        if (bounds.isValid()) {
+            if (
+                addedShapes.length === 1 &&
+                addedShapes[0].layer instanceof L.Marker
+            ) {
+                map.flyTo(
+                    (addedShapes[0].layer as L.Marker).getLatLng(),
+                    Math.max(map.getZoom(), 18),
+                    { duration: 0.8 },
+                );
+            } else {
                 map.fitBounds(bounds, {
-                    padding: [50, 50],
-                    maxZoom: 18,
+                    padding: [60, 60],
+                    maxZoom: 19,
                     animate: true,
                 });
             }
         }
-
-        return {
-            success: true,
-            message: `წარმატებით დაემატა (${layerCount} ობიექტი)`,
-            count: layerCount,
-        };
-    } catch (err) {
-        console.error("Failed to render GeoJSON:", err);
-        return {
-            success: false,
-            message: `შეცდომა: ${(err as Error).message || "დამუშავება ვერ მოხერხდა"}`,
-            count: 0,
-        };
     }
+
+    const objectLabel =
+        addedShapes.length === 1
+            ? addedShapes[0].name
+            : `${addedShapes.length} ობიექტი`;
+
+    return {
+        success: true,
+        message: `✓ დაემატა (${objectLabel})`,
+        count: addedShapes.length,
+    };
 }
 
 /**
- * Clears the active GeoJSON layer from the map and resets state.
- */
-function clearGeoJson(): void {
-    if (activeGeoJsonLayer && map) {
-        map.removeLayer(activeGeoJsonLayer);
-    }
-    activeGeoJsonLayer = null;
-    currentGeoJsonData = null;
-}
-
-/**
- * Sets up listeners for the GeoJSON polygon section in the sidebar.
+ * Sets up listeners for the GeoJSON input and restore section in the sidebar.
  */
 function setupGeoJsonControls(): void {
     const input = document.getElementById(
@@ -1363,9 +1474,6 @@ function setupGeoJsonControls(): void {
     ) as HTMLButtonElement | null;
     const clearBtn = document.getElementById(
         "btn-clear-geojson",
-    ) as HTMLButtonElement | null;
-    const toggleFillBtn = document.getElementById(
-        "btn-toggle-fill",
     ) as HTMLButtonElement | null;
     const feedback = document.getElementById("geojson-feedback");
 
@@ -1382,23 +1490,6 @@ function setupGeoJsonControls(): void {
         feedback.textContent = msg;
     };
 
-    if (toggleFillBtn) {
-        toggleFillBtn.addEventListener("click", () => {
-            isOnlyContour = !isOnlyContour;
-            toggleFillBtn.classList.toggle("active", isOnlyContour);
-
-            if (activeGeoJsonLayer) {
-                activeGeoJsonLayer.setStyle(getPolygonStyle());
-            }
-
-            showToast(
-                isOnlyContour
-                    ? "გამჭვირვალე შეფერვა (0.8)"
-                    : "გაუმჭვირვალე შეფერვა (1.0)",
-            );
-        });
-    }
-
     const handleAdd = () => {
         if (!input) return;
         const raw = input.value.trim();
@@ -1408,7 +1499,7 @@ function setupGeoJsonControls(): void {
             return;
         }
 
-        let parsed: Parameters<typeof L.geoJSON>[0];
+        let parsed: unknown;
         try {
             parsed = JSON.parse(raw);
         } catch {
@@ -1416,13 +1507,10 @@ function setupGeoJsonControls(): void {
             return;
         }
 
-        const res = renderGeoJson(parsed, true);
+        const res = restoreGeoJson(parsed, true);
         if (res.success) {
-            showFeedback(
-                `✓ პოლიგონი დაემატა (${res.count} ობიექტი)`,
-                "success",
-            );
-            showToast("პოლიგონი დაემატა რუკაზე");
+            showFeedback(res.message, "success");
+            showToast(`${res.count} ობიექტი დაემატა რუკაზე`);
         } else {
             showFeedback(`✕ ${res.message}`, "error");
         }
@@ -1443,15 +1531,11 @@ function setupGeoJsonControls(): void {
 
     if (clearBtn) {
         clearBtn.addEventListener("click", () => {
-            clearGeoJson();
             if (input) {
                 input.value = "";
             }
-            showFeedback("პოლიგონი გასუფთავებულია", "success");
-            showToast("პოლიგონი წაიშალა");
-            setTimeout(() => {
-                showFeedback("", "none");
-            }, 2000);
+            showFeedback("", "none");
+            showToast("ველი გასუფთავებულია");
         });
     }
 }

@@ -575,38 +575,6 @@ body.ui-hidden {
             letter-spacing: 0.8px;
             font-weight: 600;
         }
-
-        .toggle-fill-btn {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid $border-light;
-            color: $text-secondary;
-            font-size: 0.74rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 4px 9px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s ease;
-            outline: none;
-
-            svg {
-                flex-shrink: 0;
-            }
-
-            &:hover {
-                background: rgba(255, 255, 255, 0.08);
-                color: $text-primary;
-                border-color: $border-hover;
-            }
-
-            &.active {
-                background: rgba(255, 59, 48, 0.15);
-                border-color: rgba(255, 109, 112, 0.5);
-                color: #ff6d70;
-            }
-        }
     }
 
     .geojson-textarea-wrapper {
@@ -615,8 +583,8 @@ body.ui-hidden {
 
         textarea {
             width: 100%;
-            min-height: 90px;
-            max-height: 160px;
+            min-height: 140px;
+            max-height: 200px;
             resize: vertical;
             padding: 10px 12px;
             background: rgba(0, 0, 0, 0.32);
