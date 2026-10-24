@@ -151,7 +151,6 @@ html {
     }
 }
 
-
 /* Stats Section */
 .stats-section {
     margin-bottom: 20px;
@@ -273,8 +272,6 @@ html {
         }
     }
 }
-
-
 
 /* Premium Animated Splash Loader */
 .app-loader {
@@ -882,8 +879,6 @@ body.ui-hidden {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid $border-light;
 
     /* Color picker row */
     .drawing-color-row {
