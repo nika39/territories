@@ -644,6 +644,7 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
         snapDistance: 16,
         allowSelfIntersection: false,
         continueDrawing: false,
+        exitModeOnEscape: true,
         templineStyle: {
             color: getContourColor(activeDrawColor),
             weight: isDrawnOpaque ? 3 : 2,
@@ -1019,34 +1020,132 @@ function toggleUiVisibility(): void {
 }
 
 /**
- * Sets up keyboard shortcuts for toggling UI overlays.
+ * Deactivates any currently active Leaflet Geoman drawing or editing mode.
+ * Returns the human-readable Georgian label of the deactivated mode, or null if no mode was active.
+ */
+function disableActiveGeomanModes(): string | null {
+    if (!map || !map.pm) return null;
+
+    let deactivatedName: string | null = null;
+
+    // 1. Drawing modes (Polygon, Rectangle, Pin/Marker, Cut)
+    if (map.pm.globalDrawModeEnabled()) {
+        const activeShape = map.pm.Draw.getActiveShape();
+        if (activeShape === "Marker") {
+            deactivatedName = "პინის დასმა";
+        } else if (activeShape === "Rectangle") {
+            deactivatedName = "მართკუთხედის დახაზვა";
+        } else if (activeShape === "Polygon") {
+            deactivatedName = "პოლიგონის დახაზვა";
+        } else if (activeShape === "Cut") {
+            deactivatedName = "ამოჭრა";
+        } else {
+            deactivatedName = "დახაზვის რეჟიმი";
+        }
+        map.pm.disableDraw();
+    }
+
+    // 2. Cut mode
+    if (map.pm.globalCutModeEnabled()) {
+        if (!deactivatedName) deactivatedName = "ამოჭრა";
+        map.pm.disableGlobalCutMode();
+    }
+
+    // 3. Global Edit mode
+    if (map.pm.globalEditModeEnabled()) {
+        if (!deactivatedName) deactivatedName = "რედაქტირება";
+        map.pm.disableGlobalEditMode();
+    }
+
+    // 4. Global Drag mode
+    if (map.pm.globalDragModeEnabled()) {
+        if (!deactivatedName) deactivatedName = "გადაადგილება";
+        map.pm.disableGlobalDragMode();
+    }
+
+    // 5. Global Removal mode
+    if (map.pm.globalRemovalModeEnabled()) {
+        if (!deactivatedName) deactivatedName = "წაშლა";
+        map.pm.disableGlobalRemovalMode();
+    }
+
+    // 6. Global Rotate mode
+    if (map.pm.globalRotateModeEnabled()) {
+        if (!deactivatedName) deactivatedName = "შემობრუნება";
+        map.pm.disableGlobalRotateMode();
+    }
+
+    // 7. Ensure any layer-level Geoman mode is disabled as well
+    if (drawnItemsGroup) {
+        drawnItemsGroup.eachLayer((layer) => {
+            const l = layer as L.Path | L.Marker;
+            if (
+                l.pm &&
+                typeof l.pm.enabled === "function" &&
+                l.pm.enabled()
+            ) {
+                if (!deactivatedName) deactivatedName = "რედაქტირება";
+                l.pm.disable();
+            }
+        });
+    }
+
+    if (deactivatedName) {
+        showToast(`${deactivatedName} გაითიშა`);
+    }
+
+    return deactivatedName;
+}
+
+/**
+ * Sets up keyboard shortcuts for toggling UI overlays and canceling active Geoman modes.
  */
 function setupKeyboardShortcuts(): void {
-    window.addEventListener("keydown", (e: KeyboardEvent) => {
-        const target = e.target as HTMLElement | null;
-        const isInputField =
-            target instanceof HTMLInputElement ||
-            target instanceof HTMLTextAreaElement ||
-            target?.isContentEditable;
+    window.addEventListener(
+        "keydown",
+        (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement | null;
+            const isInputField =
+                target instanceof HTMLInputElement ||
+                target instanceof HTMLTextAreaElement ||
+                target?.isContentEditable;
 
-        const isHKey =
-            e.code === "KeyH" || e.key.toLowerCase() === "h" || e.key === "ჰ";
+            // 1. ESC key: Disable any active Geoman drawing / editing mode
+            if (e.key === "Escape" || e.code === "Escape") {
+                const deactivated = disableActiveGeomanModes();
+                if (deactivated) {
+                    e.preventDefault();
+                    if (isInputField && target) {
+                        target.blur();
+                    }
+                    return;
+                }
+            }
 
-        if (!isHKey) return;
+            // 2. H key: Toggle UI visibility
+            const isHKey =
+                e.code === "KeyH" ||
+                e.key.toLowerCase() === "h" ||
+                e.key === "ჰ";
 
-        const isCmdShiftH = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
-        const isSoloH =
-            !isInputField &&
-            !e.ctrlKey &&
-            !e.metaKey &&
-            !e.altKey &&
-            !e.shiftKey;
+            if (!isHKey) return;
 
-        if (isCmdShiftH || isSoloH) {
-            e.preventDefault();
-            toggleUiVisibility();
-        }
-    });
+            const isCmdShiftH =
+                (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
+            const isSoloH =
+                !isInputField &&
+                !e.ctrlKey &&
+                !e.metaKey &&
+                !e.altKey &&
+                !e.shiftKey;
+
+            if (isCmdShiftH || isSoloH) {
+                e.preventDefault();
+                toggleUiVisibility();
+            }
+        },
+        true,
+    );
 }
 
 /**
@@ -1165,43 +1264,6 @@ function setupYandexStyleSwitcher(): void {
     });
 }
 
-/**
- * Configures sidebar interactive elements.
- */
-function setupGlobalSidebarControls(): void {
-    const searchInput = document.getElementById(
-        "search-input",
-    ) as HTMLInputElement;
-    if (searchInput) {
-        searchInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                const query = searchInput.value.trim();
-                const coordPattern = /^(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)$/;
-                const match = query.match(coordPattern);
-
-                if (match && map) {
-                    const lat = parseFloat(match[1]);
-                    const lng = parseFloat(match[2]);
-
-                    map.flyTo([lat, lng], 17, {
-                        duration: 1.5,
-                    });
-
-                    const coordDisplay =
-                        document.getElementById("coord-display");
-                    if (coordDisplay) {
-                        coordDisplay.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                    }
-                } else {
-                    console.log(
-                        `Searching for: ${query} (Geocoding not implemented)`,
-                    );
-                }
-            }
-        });
-    }
-}
-
 // Initial initialization when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
     // Initialize default Yandex Maps view (EPSG:3395)
@@ -1210,7 +1272,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Set up listeners once
     setupMapSwitcher();
     setupYandexStyleSwitcher();
-    setupGlobalSidebarControls();
     setupKeyboardShortcuts();
     setupGeoJsonControls();
     setupGeomanSidebarControls();
