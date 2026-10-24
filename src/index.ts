@@ -941,15 +941,7 @@ function recreateMap(
         crs: crs,
     });
 
-    // Bind coordinate display on move
-    map.on("move", () => {
-        if (!map) return;
-        const c = map.getCenter();
-        const coordDisplay = document.getElementById("coord-display");
-        if (coordDisplay) {
-            coordDisplay.textContent = `${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`;
-        }
-    });
+
 
     // Ensure UI visibility class remains consistent on body
     document.body.classList.toggle("ui-hidden", isUiHidden);
@@ -971,11 +963,7 @@ function recreateMap(
     // Initialize Geoman on the newly created map
     setupGeomanOnMap(map);
 
-    // Set initial coordinates display
-    const coordDisplay = document.getElementById("coord-display");
-    if (coordDisplay) {
-        coordDisplay.textContent = `${center[0].toFixed(6)}, ${center[1].toFixed(6)}`;
-    }
+
 
     // Re-render active GeoJSON polygon if present
     if (currentGeoJsonData) {
@@ -1115,8 +1103,8 @@ function setupKeyboardShortcuts(): void {
                 const deactivated = disableActiveGeomanModes();
                 if (deactivated) {
                     e.preventDefault();
-                    if (isInputField && target) {
-                        target.blur();
+                    if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
                     }
                     return;
                 }
