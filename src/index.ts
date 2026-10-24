@@ -3,9 +3,9 @@ import L from "leaflet";
 import "@geoman-io/leaflet-geoman-free";
 import { MaptilerLayer } from "@maptiler/leaflet-maptilersdk";
 
-// Tbilisi initial coordinates (Avlabari/Isani area)
-const initialCenter: L.LatLngTuple = [41.674333, 44.875718];
-const initialZoom = 18;
+// Tbilisi initial coordinates
+const initialCenter: L.LatLngTuple = [41.677763, 44.848284];
+const initialZoom = 16;
 
 // Global map reference and active provider state
 let map: L.Map | null = null;
@@ -1067,11 +1067,7 @@ function disableActiveGeomanModes(): string | null {
     if (drawnItemsGroup) {
         drawnItemsGroup.eachLayer((layer) => {
             const l = layer as L.Path | L.Marker;
-            if (
-                l.pm &&
-                typeof l.pm.enabled === "function" &&
-                l.pm.enabled()
-            ) {
+            if (l.pm && typeof l.pm.enabled === "function" && l.pm.enabled()) {
                 if (!deactivatedName) deactivatedName = "რედაქტირება";
                 l.pm.disable();
             }
