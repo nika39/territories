@@ -528,7 +528,7 @@ function updateDrawnShapesUI(): void {
 }
 
 /**
- * Exports all drawn shapes into GeoJSON format, copies to clipboard and updates the GeoJSON input area.
+ * Exports all drawn shapes into GeoJSON format and copies to clipboard.
  */
 function exportAllDrawnGeoJson(): void {
     if (trackedShapes.size === 0) {
@@ -556,20 +556,29 @@ function exportAllDrawnGeoJson(): void {
 
     const text = JSON.stringify(fc, null, 2);
 
-    const geoJsonInput = document.getElementById(
-        "geojson-input",
-    ) as HTMLTextAreaElement | null;
-    if (geoJsonInput) {
-        geoJsonInput.value = text;
-    }
-
     navigator.clipboard
         .writeText(text)
         .then(() => {
-            showToast("GeoJSON დაკოპირდა და გადატანილია ველში");
+            showToast("GeoJSON დაკოპირდა ბუფერში");
         })
         .catch(() => {
-            showToast("GeoJSON გადატანილია ველში");
+            try {
+                const tempTextArea = document.createElement("textarea");
+                tempTextArea.value = text;
+                tempTextArea.style.position = "fixed";
+                tempTextArea.style.left = "-9999px";
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                const successful = document.execCommand("copy");
+                document.body.removeChild(tempTextArea);
+                if (successful) {
+                    showToast("GeoJSON დაკოპირდა ბუფერში");
+                    return;
+                }
+            } catch {
+                // Ignore fallback error
+            }
+            showToast("GeoJSON კოპირება ვერ მოხერხდა");
         });
 }
 
