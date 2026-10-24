@@ -1,11 +1,8 @@
 const path = require("path");
-const webpack = require("webpack");
 const { merge } = require("webpack-merge");
 const common = require("./webpack.common.js");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
-const bannerFn = require("../../../license.js");
-const pkg = require("../package.json");
 const ESLintPlugin = require("eslint-webpack-plugin");
 
 module.exports = () => {
@@ -36,15 +33,7 @@ module.exports = () => {
                         loader: "babel-loader",
                         options: {
                             presets: [
-                                [
-                                    "@babel/preset-env",
-                                    {
-                                        useBuiltIns: "usage",
-                                        corejs: 3,
-                                        bugfixes: true,
-                                        modules: false,
-                                    },
-                                ],
+                                "@babel/preset-env",
                                 "@babel/preset-typescript",
                             ],
                         },
@@ -117,10 +106,6 @@ module.exports = () => {
         },
         plugins: [
             new CleanWebpackPlugin(),
-            new webpack.BannerPlugin({
-                banner: bannerFn(pkg),
-                entryOnly: true,
-            }),
             new ESLintPlugin({
                 extensions: ["ts", "js"],
             }),
