@@ -143,8 +143,9 @@ function getGeomanPathOptions(color = activeDrawColor): L.PathOptions {
         weight: isDrawnOpaque ? 3 : 2,
         opacity: 1,
         fillColor: color,
-        fillOpacity: isDrawnOpaque ? 1.0 : 0.35,
+        fillOpacity: isDrawnOpaque ? 1.0 : 0.15,
         fill: true,
+        dashArray: isDrawnOpaque ? undefined : "6, 6",
         lineCap: "round",
         lineJoin: "round",
     };
@@ -393,31 +394,65 @@ function deleteTrackedShape(id: string, notify = true): void {
 }
 
 /**
- * Copies GeoJSON feature of a single marked shape to clipboard.
+ * Safely copies text to the system clipboard, with fallback for environments
+ * without Permissions API or non-secure contexts.
  */
-function copySingleShapeGeoJson(id: string): void {
-    const shape = trackedShapes.get(id);
-    if (!shape) return;
+async function copyToClipboard(text: string): Promise<boolean> {
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch {
+        // Fallback to legacy execCommand below
+    }
 
+    try {
+        const tempTextArea = document.createElement("textarea");
+        tempTextArea.value = text;
+        tempTextArea.style.position = "fixed";
+        tempTextArea.style.left = "-9999px";
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        const successful = document.execCommand("copy");
+        document.body.removeChild(tempTextArea);
+        return successful;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Converts an internal TrackedShape into a standardized GeoJSON Feature with properties.
+ */
+function shapeToGeoJsonFeature(shape: TrackedShape): GeoJSON.Feature {
     const feat = shape.layer.toGeoJSON();
     feat.properties = {
         id: shape.id,
         name: shape.name,
         shapeType: shape.shapeType,
+        color: shape.color,
         area: shape.area,
         perimeter: shape.perimeter,
-        color: shape.color,
     };
+    return feat;
+}
 
+/**
+ * Copies GeoJSON feature of a single marked shape to clipboard.
+ */
+async function copySingleShapeGeoJson(id: string): Promise<void> {
+    const shape = trackedShapes.get(id);
+    if (!shape) return;
+
+    const feat = shapeToGeoJsonFeature(shape);
     const text = JSON.stringify(feat, null, 2);
-    navigator.clipboard
-        .writeText(text)
-        .then(() => {
-            showToast(`${shape.name}-ს GeoJSON დაკოპირდა`);
-        })
-        .catch(() => {
-            showToast("კოპირება ვერ მოხერხდა");
-        });
+    const copied = await copyToClipboard(text);
+    showToast(
+        copied
+            ? `${shape.name}-ს GeoJSON დაკოპირდა`
+            : "კოპირება ვერ მოხერხდა",
+    );
 }
 
 /**
@@ -534,56 +569,27 @@ function updateDrawnShapesUI(): void {
 /**
  * Exports all drawn shapes into GeoJSON format and copies to clipboard.
  */
-function exportAllDrawnGeoJson(): void {
+async function exportAllDrawnGeoJson(): Promise<void> {
     if (trackedShapes.size === 0) {
         showToast("მონიშნული ტერიტორიები არ არის");
         return;
     }
 
-    const features = Array.from(trackedShapes.values()).map((s) => {
-        const feat = s.layer.toGeoJSON();
-        feat.properties = {
-            id: s.id,
-            name: s.name,
-            shapeType: s.shapeType,
-            area: s.area,
-            perimeter: s.perimeter,
-            color: s.color,
-        };
-        return feat;
-    });
-
+    const features = Array.from(trackedShapes.values()).map(
+        shapeToGeoJsonFeature,
+    );
     const fc: GeoJSON.FeatureCollection = {
         type: "FeatureCollection",
         features,
     };
 
     const text = JSON.stringify(fc, null, 2);
-
-    navigator.clipboard
-        .writeText(text)
-        .then(() => {
-            showToast("GeoJSON დაკოპირდა ბუფერში");
-        })
-        .catch(() => {
-            try {
-                const tempTextArea = document.createElement("textarea");
-                tempTextArea.value = text;
-                tempTextArea.style.position = "fixed";
-                tempTextArea.style.left = "-9999px";
-                document.body.appendChild(tempTextArea);
-                tempTextArea.select();
-                const successful = document.execCommand("copy");
-                document.body.removeChild(tempTextArea);
-                if (successful) {
-                    showToast("GeoJSON დაკოპირდა ბუფერში");
-                    return;
-                }
-            } catch {
-                // Ignore fallback error
-            }
-            showToast("GeoJSON კოპირება ვერ მოხერხდა");
-        });
+    const copied = await copyToClipboard(text);
+    showToast(
+        copied
+            ? "GeoJSON დაკოპირდა ბუფერში"
+            : "GeoJSON კოპირება ვერ მოხერხდა",
+    );
 }
 
 /**
@@ -654,6 +660,7 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
         templineStyle: {
             color: getContourColor(activeDrawColor),
             weight: isDrawnOpaque ? 3 : 2,
+            dashArray: isDrawnOpaque ? undefined : [6, 6],
         },
         hintlineStyle: {
             color: getContourColor(activeDrawColor),
@@ -778,6 +785,7 @@ function toggleDrawnOpaque(): void {
             templineStyle: {
                 color: getContourColor(activeDrawColor),
                 weight: isDrawnOpaque ? 3 : 2,
+                dashArray: isDrawnOpaque ? undefined : [6, 6],
             },
             hintlineStyle: {
                 color: getContourColor(activeDrawColor),
@@ -792,7 +800,7 @@ function toggleDrawnOpaque(): void {
     showToast(
         isDrawnOpaque
             ? "შიგთავსი: გაუმჭვირვალე (კონტური გამოკვეთილია)"
-            : "შიგთავსი: გამჭვირვალე (0.35)",
+            : "შიგთავსი: გამჭვირვალე (0.15)",
     );
 }
 
@@ -845,6 +853,7 @@ function setupGeomanSidebarControls(): void {
                     templineStyle: {
                         color: getContourColor(activeDrawColor),
                         weight: isDrawnOpaque ? 3 : 2,
+                        dashArray: isDrawnOpaque ? undefined : [6, 6],
                     },
                     hintlineStyle: {
                         color: getContourColor(activeDrawColor),
@@ -890,18 +899,9 @@ function recreateMap(
     if (map) {
         // Preserve drawn shapes before destroying previous map instance
         if (trackedShapes.size > 0) {
-            const features = Array.from(trackedShapes.values()).map((s) => {
-                const feat = s.layer.toGeoJSON();
-                feat.properties = {
-                    id: s.id,
-                    name: s.name,
-                    shapeType: s.shapeType,
-                    color: s.color,
-                    area: s.area,
-                    perimeter: s.perimeter,
-                };
-                return feat;
-            });
+            const features = Array.from(trackedShapes.values()).map(
+                shapeToGeoJsonFeature,
+            );
             preservedDrawnGeoJson = {
                 type: "FeatureCollection",
                 features,
