@@ -396,8 +396,9 @@ html {
         }
     }
 
-    /* Yandex Style Switcher */
-    .yandex-style-switcher {
+    /* Map Style Switchers (Yandex & Google) */
+    .yandex-style-switcher,
+    .google-style-switcher {
         margin-top: 10px;
         padding: 9px 10px;
         background: rgba(0, 0, 0, 0.2);
@@ -406,13 +407,15 @@ html {
         transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         animation: fadeInYandexSwitcher 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 
-        .yandex-style-header {
+        .yandex-style-header,
+        .google-style-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 7px;
 
-            .yandex-style-title {
+            .yandex-style-title,
+            .google-style-title {
                 display: flex;
                 align-items: center;
                 gap: 5px;
@@ -427,7 +430,8 @@ html {
                 }
             }
 
-            .yandex-style-badge {
+            .yandex-style-badge,
+            .google-style-badge {
                 font-size: 0.65rem;
                 padding: 1px 6px;
                 border-radius: 10px;
@@ -438,7 +442,8 @@ html {
             }
         }
 
-        .yandex-style-buttons {
+        .yandex-style-buttons,
+        .google-style-buttons {
             display: flex;
             background: rgba(0, 0, 0, 0.25);
             border: 1px solid $border-light;
@@ -447,7 +452,8 @@ html {
             gap: 3px;
         }
 
-        .yandex-style-btn {
+        .yandex-style-btn,
+        .google-style-btn {
             flex: 1;
             background: transparent;
             border: none;

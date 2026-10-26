@@ -11,7 +11,6 @@ const initialZoom = 16;
 let map: L.Map | null = null;
 let currentProvider = "yandex";
 
-
 // Global UI visibility state
 let isUiHidden = false;
 
@@ -23,13 +22,18 @@ const maptilerLayer = new MaptilerLayer({
     style: "01a120ea-26f0-7a1d-b08e-4c63cf192ffd",
 });
 
-const googleStreetLayer = L.tileLayer(
-    "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ka",
-    {
-        maxZoom: 21,
-        attribution: "&copy; Google",
-    },
-);
+export const GOOGLE_STYLE_FULL =
+    "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ka";
+
+export const GOOGLE_STYLE_FILTERED =
+    "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ka&apistyle=s.t:2|p.v:off,s.t:4|p.v:on";
+
+let activeGoogleStyle: "full" | "filtered" = "full";
+
+const googleStreetLayer = L.tileLayer(GOOGLE_STYLE_FULL, {
+    maxZoom: 21,
+    attribution: "&copy; Google",
+});
 
 export const YANDEX_STYLE_OLD =
     "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ka_GE&style=" +
@@ -914,8 +918,6 @@ function recreateMap(
         crs: crs,
     });
 
-
-
     // Ensure UI visibility class remains consistent on body
     document.body.classList.toggle("ui-hidden", isUiHidden);
 
@@ -935,10 +937,6 @@ function recreateMap(
 
     // Initialize Geoman on the newly created map
     setupGeomanOnMap(map);
-
-
-
-
 }
 
 let toastTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -1108,6 +1106,9 @@ function setupKeyboardShortcuts(): void {
 function setupMapSwitcher(): void {
     const buttons = document.querySelectorAll(".switcher-btn");
     const subtitle = document.querySelector(".logo-title .sub-title");
+    const googleStyleSwitcher = document.getElementById(
+        "google-style-switcher",
+    );
     const yandexStyleSwitcher = document.getElementById(
         "yandex-style-switcher",
     );
@@ -1137,6 +1138,11 @@ function setupMapSwitcher(): void {
                 } else if (provider === "yandex") {
                     subtitle.textContent = "Yandex Maps ინტეგრაცია";
                 }
+            }
+
+            if (googleStyleSwitcher) {
+                googleStyleSwitcher.style.display =
+                    provider === "google-street" ? "block" : "none";
             }
 
             if (yandexStyleSwitcher) {
@@ -1218,6 +1224,78 @@ function setupYandexStyleSwitcher(): void {
     });
 }
 
+/**
+ * Switches between standard and filtered Google Maps style.
+ */
+function switchGoogleStyle(style: "full" | "filtered"): void {
+    if (activeGoogleStyle === style && currentProvider === "google-street")
+        return;
+    activeGoogleStyle = style;
+
+    const targetUrl =
+        style === "filtered" ? GOOGLE_STYLE_FILTERED : GOOGLE_STYLE_FULL;
+    googleStreetLayer.setUrl(targetUrl);
+
+    // Update style buttons state
+    const styleButtons = document.querySelectorAll(".google-style-btn");
+    styleButtons.forEach((btn) => {
+        if (btn.getAttribute("data-google-style") === style) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+
+    // Update badge text
+    const badge = document.getElementById("google-style-badge");
+    if (badge) {
+        badge.textContent =
+            style === "filtered" ? "გაფილტრული" : "ყველა იარლიყი";
+    }
+
+    // If not currently on Google, switch map to Google
+    if (currentProvider !== "google-street") {
+        const googleBtn = document.querySelector(
+            '.switcher-btn[data-provider="google-street"]',
+        ) as HTMLButtonElement | null;
+        if (googleBtn) {
+            googleBtn.click();
+        }
+    }
+
+    showToast(
+        style === "filtered"
+            ? "Google Maps: გაფილტრული რეჟიმი (მხოლოდ გაჩერებები და მისამართები)"
+            : "Google Maps: სრული რეჟიმი (ყველა იარლიყი გამოჩენილია)",
+    );
+}
+
+/**
+ * Sets up Google Maps style toggle buttons listeners.
+ */
+function setupGoogleStyleSwitcher(): void {
+    const googleStyleSwitcher = document.getElementById(
+        "google-style-switcher",
+    );
+    if (googleStyleSwitcher) {
+        googleStyleSwitcher.style.display =
+            currentProvider === "google-street" ? "block" : "none";
+    }
+
+    const styleButtons = document.querySelectorAll(".google-style-btn");
+    styleButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const style = btn.getAttribute("data-google-style") as
+                | "full"
+                | "filtered"
+                | null;
+            if (style === "full" || style === "filtered") {
+                switchGoogleStyle(style);
+            }
+        });
+    });
+}
+
 // Initial initialization when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
     // Initialize default Yandex Maps view (EPSG:3395)
@@ -1225,6 +1303,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Set up listeners once
     setupMapSwitcher();
+    setupGoogleStyleSwitcher();
     setupYandexStyleSwitcher();
     setupKeyboardShortcuts();
     setupGeoJsonControls();
@@ -1292,14 +1371,13 @@ function parseGeoJsonFeatures(data: unknown): GeoJSON.Feature[] {
 
     // 1. FeatureCollection
     if (obj.type === "FeatureCollection" && Array.isArray(obj.features)) {
-        return obj.features.filter(
-            (f: unknown): f is GeoJSON.Feature =>
-                Boolean(
-                    f &&
-                        typeof f === "object" &&
-                        "geometry" in f &&
-                        (f as { geometry: unknown }).geometry,
-                ),
+        return obj.features.filter((f: unknown): f is GeoJSON.Feature =>
+            Boolean(
+                f &&
+                typeof f === "object" &&
+                "geometry" in f &&
+                (f as { geometry: unknown }).geometry,
+            ),
         );
     }
 

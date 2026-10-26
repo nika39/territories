@@ -45,15 +45,30 @@
                 <button class="switcher-btn active" data-provider="yandex">Yandex Maps</button>
             </div>
 
+            <!-- Google Style Variant Switcher -->
+            <div class="google-style-switcher" id="google-style-switcher" style="display: none;">
+                <div class="google-style-header">
+                    <span class="google-style-title">
+                        Google იარლიყები
+                    </span>
+                    <span class="google-style-badge" id="google-style-badge">ყველა იარლიყი</span>
+                </div>
+                <div class="google-style-buttons">
+                    <button type="button" class="google-style-btn active" data-google-style="full" id="btn-google-style-full" title="ყველა იარლიყი გამოჩენილია">
+                        <span class="dot"></span>
+                        <span>ყველა იარლიყი</span>
+                    </button>
+                    <button type="button" class="google-style-btn" data-google-style="filtered" id="btn-google-style-filtered" title="გაფილტრული (მხოლოდ გაჩერებები და მისამართები)">
+                        <span class="dot"></span>
+                        <span>გაფილტრული</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Yandex Style Variant Switcher -->
             <div class="yandex-style-switcher" id="yandex-style-switcher">
                 <div class="yandex-style-header">
                     <span class="yandex-style-title">
-                        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="2" y1="12" x2="22" y2="12"></line>
-                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                        </svg>
                         Yandex იარლიყები
                     </span>
                     <span class="yandex-style-badge" id="yandex-style-badge">ყველა იარლიყი</span>
