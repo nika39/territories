@@ -1101,17 +1101,19 @@ function setupKeyboardShortcuts(): void {
 }
 
 /**
+ * Maps providers to their corresponding style switcher container ID.
+ */
+const PROVIDER_STYLE_SWITCHERS: Record<string, string> = {
+    "google-street": "google-style-switcher",
+    yandex: "yandex-style-switcher",
+};
+
+/**
  * Sets up map provider switcher behavior.
  */
 function setupMapSwitcher(): void {
     const buttons = document.querySelectorAll(".switcher-btn");
     const subtitle = document.querySelector(".logo-title .sub-title");
-    const googleStyleSwitcher = document.getElementById(
-        "google-style-switcher",
-    );
-    const yandexStyleSwitcher = document.getElementById(
-        "yandex-style-switcher",
-    );
 
     buttons.forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -1131,24 +1133,22 @@ function setupMapSwitcher(): void {
             recreateMap(crs, [lat, lng], zoom, provider);
 
             if (subtitle) {
-                if (provider === "maptiler") {
-                    subtitle.textContent = "MapTiler ინტეგრაცია";
-                } else if (provider === "google-street") {
-                    subtitle.textContent = "Google Maps ინტეგრაცია";
-                } else if (provider === "yandex") {
-                    subtitle.textContent = "Yandex Maps ინტეგრაცია";
+                const providerLabel = btn.textContent?.trim();
+                if (providerLabel) {
+                    subtitle.textContent = `${providerLabel} ინტეგრაცია`;
                 }
             }
 
-            if (googleStyleSwitcher) {
-                googleStyleSwitcher.style.display =
-                    provider === "google-street" ? "block" : "none";
-            }
-
-            if (yandexStyleSwitcher) {
-                yandexStyleSwitcher.style.display =
-                    provider === "yandex" ? "block" : "none";
-            }
+            // Toggle visibility of provider-specific style switchers
+            Object.entries(PROVIDER_STYLE_SWITCHERS).forEach(
+                ([provKey, switcherId]) => {
+                    const el = document.getElementById(switcherId);
+                    if (el) {
+                        el.style.display =
+                            provKey === provider ? "block" : "none";
+                    }
+                },
+            );
 
             currentProvider = provider;
         });
@@ -1198,6 +1198,36 @@ function syncStyleSwitcherUi(
 }
 
 /**
+ * Generic helper to set up style switchers for any map provider.
+ */
+function setupStyleSwitcher(
+    providerPrefix: "yandex" | "google",
+    providerKey: "yandex" | "google-street",
+    dataAttr: "data-yandex-style" | "data-google-style",
+    onSwitch: (style: string) => void,
+): void {
+    const switcherEl = document.getElementById(
+        `${providerPrefix}-style-switcher`,
+    );
+    if (switcherEl) {
+        switcherEl.style.display =
+            currentProvider === providerKey ? "block" : "none";
+    }
+
+    const styleButtons = document.querySelectorAll(
+        `.${providerPrefix}-style-btn`,
+    );
+    styleButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const style = btn.getAttribute(dataAttr);
+            if (style) {
+                onSwitch(style);
+            }
+        });
+    });
+}
+
+/**
  * Switches between existing and new Yandex style links.
  */
 function switchYandexStyle(style: "old" | "new"): void {
@@ -1229,25 +1259,10 @@ function switchYandexStyle(style: "old" | "new"): void {
  * Sets up Yandex style toggle buttons listeners.
  */
 function setupYandexStyleSwitcher(): void {
-    const yandexStyleSwitcher = document.getElementById(
-        "yandex-style-switcher",
-    );
-    if (yandexStyleSwitcher) {
-        yandexStyleSwitcher.style.display =
-            currentProvider === "yandex" ? "block" : "none";
-    }
-
-    const styleButtons = document.querySelectorAll(".yandex-style-btn");
-    styleButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-            const style = btn.getAttribute("data-yandex-style") as
-                | "old"
-                | "new"
-                | null;
-            if (style === "old" || style === "new") {
-                switchYandexStyle(style);
-            }
-        });
+    setupStyleSwitcher("yandex", "yandex", "data-yandex-style", (style) => {
+        if (style === "old" || style === "new") {
+            switchYandexStyle(style);
+        }
     });
 }
 
@@ -1285,26 +1300,16 @@ function switchGoogleStyle(style: "full" | "filtered"): void {
  * Sets up Google Maps style toggle buttons listeners.
  */
 function setupGoogleStyleSwitcher(): void {
-    const googleStyleSwitcher = document.getElementById(
-        "google-style-switcher",
-    );
-    if (googleStyleSwitcher) {
-        googleStyleSwitcher.style.display =
-            currentProvider === "google-street" ? "block" : "none";
-    }
-
-    const styleButtons = document.querySelectorAll(".google-style-btn");
-    styleButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-            const style = btn.getAttribute("data-google-style") as
-                | "full"
-                | "filtered"
-                | null;
+    setupStyleSwitcher(
+        "google",
+        "google-street",
+        "data-google-style",
+        (style) => {
             if (style === "full" || style === "filtered") {
                 switchGoogleStyle(style);
             }
-        });
-    });
+        },
+    );
 }
 
 // Initial initialization when DOM is ready
