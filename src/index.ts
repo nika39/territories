@@ -1156,6 +1156,48 @@ function setupMapSwitcher(): void {
 }
 
 /**
+ * Synchronizes the style switcher UI (active button, badge text, and toast notification)
+ * using the HTML DOM elements as the single source of truth.
+ */
+function syncStyleSwitcherUi(
+    providerPrefix: "yandex" | "google",
+    dataAttr: "data-yandex-style" | "data-google-style",
+    styleValue: string,
+    providerTitle: string,
+): void {
+    const activeBtn = document.querySelector(
+        `.${providerPrefix}-style-btn[${dataAttr}="${styleValue}"]`,
+    ) as HTMLElement | null;
+
+    // 1. Toggle active state on buttons
+    const styleButtons = document.querySelectorAll(
+        `.${providerPrefix}-style-btn`,
+    );
+    styleButtons.forEach((btn) => {
+        btn.classList.toggle("active", btn === activeBtn);
+    });
+
+    // 2. Derive badge label directly from button text
+    const badge = document.getElementById(`${providerPrefix}-style-badge`);
+    if (badge && activeBtn) {
+        const label = activeBtn
+            .querySelector("span:not(.dot)")
+            ?.textContent?.trim();
+        if (label) {
+            badge.textContent = label;
+        }
+    }
+
+    // 3. Derive toast notification directly from button title
+    if (activeBtn) {
+        const titleText = activeBtn.getAttribute("title");
+        if (titleText) {
+            showToast(`${providerTitle}: ${titleText}`);
+        }
+    }
+}
+
+/**
  * Switches between existing and new Yandex style links.
  */
 function switchYandexStyle(style: "old" | "new"): void {
@@ -1165,21 +1207,12 @@ function switchYandexStyle(style: "old" | "new"): void {
     const targetUrl = style === "new" ? YANDEX_STYLE_NEW : YANDEX_STYLE_OLD;
     yandexLayer.setUrl(targetUrl);
 
-    // Update style buttons state
-    const styleButtons = document.querySelectorAll(".yandex-style-btn");
-    styleButtons.forEach((btn) => {
-        if (btn.getAttribute("data-yandex-style") === style) {
-            btn.classList.add("active");
-        } else {
-            btn.classList.remove("active");
-        }
-    });
-
-    // Update badge text
-    const badge = document.getElementById("yandex-style-badge");
-    if (badge) {
-        badge.textContent = style === "new" ? "გაფილტრული" : "ყველა იარლიყი";
-    }
+    syncStyleSwitcherUi(
+        "yandex",
+        "data-yandex-style",
+        style,
+        "Yandex",
+    );
 
     // If not currently on Yandex, switch map to Yandex
     if (currentProvider !== "yandex") {
@@ -1190,12 +1223,6 @@ function switchYandexStyle(style: "old" | "new"): void {
             yandexBtn.click();
         }
     }
-
-    showToast(
-        style === "new"
-            ? "Yandex: გაფილტრული რეჟიმი (არასაჭირო იარლიყები დამალულია)"
-            : "Yandex: სრული რეჟიმი (ყველა იარლიყი გამოჩენილია)",
-    );
 }
 
 /**
@@ -1236,22 +1263,12 @@ function switchGoogleStyle(style: "full" | "filtered"): void {
         style === "filtered" ? GOOGLE_STYLE_FILTERED : GOOGLE_STYLE_FULL;
     googleStreetLayer.setUrl(targetUrl);
 
-    // Update style buttons state
-    const styleButtons = document.querySelectorAll(".google-style-btn");
-    styleButtons.forEach((btn) => {
-        if (btn.getAttribute("data-google-style") === style) {
-            btn.classList.add("active");
-        } else {
-            btn.classList.remove("active");
-        }
-    });
-
-    // Update badge text
-    const badge = document.getElementById("google-style-badge");
-    if (badge) {
-        badge.textContent =
-            style === "filtered" ? "გაფილტრული" : "ყველა იარლიყი";
-    }
+    syncStyleSwitcherUi(
+        "google",
+        "data-google-style",
+        style,
+        "Google Maps",
+    );
 
     // If not currently on Google, switch map to Google
     if (currentProvider !== "google-street") {
@@ -1262,12 +1279,6 @@ function switchGoogleStyle(style: "full" | "filtered"): void {
             googleBtn.click();
         }
     }
-
-    showToast(
-        style === "filtered"
-            ? "Google Maps: გაფილტრული რეჟიმი (მხოლოდ გაჩერებები და მისამართები)"
-            : "Google Maps: სრული რეჟიმი (ყველა იარლიყი გამოჩენილია)",
-    );
 }
 
 /**
