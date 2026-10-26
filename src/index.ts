@@ -449,9 +449,7 @@ async function copySingleShapeGeoJson(id: string): Promise<void> {
     const text = JSON.stringify(feat, null, 2);
     const copied = await copyToClipboard(text);
     showToast(
-        copied
-            ? `${shape.name}-ს GeoJSON დაკოპირდა`
-            : "კოპირება ვერ მოხერხდა",
+        copied ? `${shape.name}-ს GeoJSON დაკოპირდა` : "კოპირება ვერ მოხერხდა",
     );
 }
 
@@ -586,9 +584,7 @@ async function exportAllDrawnGeoJson(): Promise<void> {
     const text = JSON.stringify(fc, null, 2);
     const copied = await copyToClipboard(text);
     showToast(
-        copied
-            ? "GeoJSON დაკოპირდა ბუფერში"
-            : "GeoJSON კოპირება ვერ მოხერხდა",
+        copied ? "GeoJSON დაკოპირდა ბუფერში" : "GeoJSON კოპირება ვერ მოხერხდა",
     );
 }
 
@@ -636,12 +632,12 @@ function setupGeomanOnMap(mapInstance: L.Map): void {
                 removeLastVertex: "ბოლო წერტილის წაშლა",
             },
             buttonTitles: {
-                drawPolyButton: "პოლიგონის დახაზვა (შენობა / არეალი)",
+                drawPolyButton: "პოლიგონის დახაზვა (P / 1)",
                 drawRectButton: "მართკუთხედის დახაზვა",
-                drawMarkerButton: "პინის დასმა (შენობის / კორპუსის მონიშვნა)",
-                editButton: "ობიექტების რედაქტირება",
-                dragButton: "ობიექტების გადაადგილება",
-                cutButton: "პოლიგონის ამოჭრა (შიდა ეზო)",
+                drawMarkerButton: "პინის დასმა (M / 2)",
+                editButton: "ობიექტების რედაქტირება (E / 3)",
+                dragButton: "ობიექტების გადაადგილება (D / V / 4)",
+                cutButton: "პოლიგონის ამოჭრა",
                 deleteButton: "ობიექტების წაშლა",
                 rotateButton: "ობიექტების შემობრუნება",
             },
@@ -1050,7 +1046,91 @@ function disableActiveGeomanModes(): string | null {
 }
 
 /**
- * Sets up keyboard shortcuts for toggling UI overlays and canceling active Geoman modes.
+ * Toggles a Geoman mode via its official map.pm APIs, providing clear toast feedback.
+ */
+function toggleGeomanToolbarMode(
+    controlName: "drawPolygon" | "drawMarker" | "editMode" | "dragMode",
+    modeNameGeo: string,
+): void {
+    if (!map || !map.pm) return;
+
+    let willBeActive = false;
+
+    if (controlName === "drawPolygon") {
+        const isCurrentActive =
+            map.pm.globalDrawModeEnabled() &&
+            map.pm.Draw.getActiveShape() === "Polygon";
+
+        if (isCurrentActive) {
+            map.pm.disableDraw();
+            willBeActive = false;
+        } else {
+            if (map.pm.globalEditModeEnabled()) map.pm.disableGlobalEditMode();
+            if (map.pm.globalDragModeEnabled()) map.pm.disableGlobalDragMode();
+            if (map.pm.globalRemovalModeEnabled())
+                map.pm.disableGlobalRemovalMode();
+            if (map.pm.globalRotateModeEnabled())
+                map.pm.disableGlobalRotateMode();
+            map.pm.enableDraw("Polygon");
+            willBeActive = true;
+        }
+    } else if (controlName === "drawMarker") {
+        const isCurrentActive =
+            map.pm.globalDrawModeEnabled() &&
+            map.pm.Draw.getActiveShape() === "Marker";
+
+        if (isCurrentActive) {
+            map.pm.disableDraw();
+            willBeActive = false;
+        } else {
+            if (map.pm.globalEditModeEnabled()) map.pm.disableGlobalEditMode();
+            if (map.pm.globalDragModeEnabled()) map.pm.disableGlobalDragMode();
+            if (map.pm.globalRemovalModeEnabled())
+                map.pm.disableGlobalRemovalMode();
+            if (map.pm.globalRotateModeEnabled())
+                map.pm.disableGlobalRotateMode();
+            map.pm.enableDraw("Marker");
+            willBeActive = true;
+        }
+    } else if (controlName === "editMode") {
+        const isCurrentActive = map.pm.globalEditModeEnabled();
+
+        if (isCurrentActive) {
+            map.pm.disableGlobalEditMode();
+            willBeActive = false;
+        } else {
+            if (map.pm.globalDrawModeEnabled()) map.pm.disableDraw();
+            if (map.pm.globalDragModeEnabled()) map.pm.disableGlobalDragMode();
+            if (map.pm.globalRemovalModeEnabled())
+                map.pm.disableGlobalRemovalMode();
+            if (map.pm.globalRotateModeEnabled())
+                map.pm.disableGlobalRotateMode();
+            map.pm.enableGlobalEditMode();
+            willBeActive = true;
+        }
+    } else if (controlName === "dragMode") {
+        const isCurrentActive = map.pm.globalDragModeEnabled();
+
+        if (isCurrentActive) {
+            map.pm.disableGlobalDragMode();
+            willBeActive = false;
+        } else {
+            if (map.pm.globalDrawModeEnabled()) map.pm.disableDraw();
+            if (map.pm.globalEditModeEnabled()) map.pm.disableGlobalEditMode();
+            if (map.pm.globalRemovalModeEnabled())
+                map.pm.disableGlobalRemovalMode();
+            if (map.pm.globalRotateModeEnabled())
+                map.pm.disableGlobalRotateMode();
+            map.pm.enableGlobalDragMode();
+            willBeActive = true;
+        }
+    }
+
+    showToast(`${modeNameGeo} ${willBeActive ? "გააქტიურდა" : "გაითიშა"}`);
+}
+
+/**
+ * Sets up keyboard shortcuts for toggling UI overlays and canceling/toggling active Geoman modes.
  */
 function setupKeyboardShortcuts(): void {
     window.addEventListener(
@@ -1075,25 +1155,92 @@ function setupKeyboardShortcuts(): void {
             }
 
             // 2. H key: Toggle UI visibility
+            // Restricted strictly to Ctrl+Shift+H (or Cmd+Shift+H on Mac) and solo 'h' (when not in an input)
             const isHKey =
                 e.code === "KeyH" ||
                 e.key.toLowerCase() === "h" ||
                 e.key === "ჰ";
 
-            if (!isHKey) return;
+            if (isHKey) {
+                const isCmdShiftH =
+                    (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
+                const isSoloH =
+                    !isInputField &&
+                    !e.ctrlKey &&
+                    !e.metaKey &&
+                    !e.altKey &&
+                    !e.shiftKey;
 
-            const isCmdShiftH =
-                (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
-            const isSoloH =
-                !isInputField &&
-                !e.ctrlKey &&
-                !e.metaKey &&
-                !e.altKey &&
-                !e.shiftKey;
+                if (isCmdShiftH || isSoloH) {
+                    e.preventDefault();
+                    toggleUiVisibility();
+                    return;
+                }
+            }
 
-            if (isCmdShiftH || isSoloH) {
+            // 3. Tool shortcuts: Polygon, Pin, Edit, Drag/Move
+            // Ignore if typing in an input field or if modifier keys (Ctrl, Cmd, Alt) are held
+            if (isInputField || e.ctrlKey || e.metaKey || e.altKey) {
+                return;
+            }
+
+            // Polygon: 'P' or '1'
+            if (
+                e.code === "KeyP" ||
+                e.code === "Digit1" ||
+                e.code === "Numpad1" ||
+                e.key.toLowerCase() === "p" ||
+                e.key === "პ" ||
+                e.key === "1"
+            ) {
                 e.preventDefault();
-                toggleUiVisibility();
+                toggleGeomanToolbarMode("drawPolygon", "პოლიგონის დახაზვა");
+                return;
+            }
+
+            // Pin / Marker: 'M' or '2'
+            if (
+                e.code === "KeyM" ||
+                e.code === "Digit2" ||
+                e.code === "Numpad2" ||
+                e.key.toLowerCase() === "m" ||
+                e.key === "მ" ||
+                e.key === "2"
+            ) {
+                e.preventDefault();
+                toggleGeomanToolbarMode("drawMarker", "პინის დასმა");
+                return;
+            }
+
+            // Edit Mode: 'E' or '3'
+            if (
+                e.code === "KeyE" ||
+                e.code === "Digit3" ||
+                e.code === "Numpad3" ||
+                e.key.toLowerCase() === "e" ||
+                e.key === "ე" ||
+                e.key === "3"
+            ) {
+                e.preventDefault();
+                toggleGeomanToolbarMode("editMode", "ობიექტების რედაქტირება");
+                return;
+            }
+
+            // Drag / Move Mode: 'D', 'V', or '4'
+            if (
+                e.code === "KeyD" ||
+                e.code === "KeyV" ||
+                e.code === "Digit4" ||
+                e.code === "Numpad4" ||
+                e.key.toLowerCase() === "d" ||
+                e.key.toLowerCase() === "v" ||
+                e.key === "დ" ||
+                e.key === "ვ" ||
+                e.key === "4"
+            ) {
+                e.preventDefault();
+                toggleGeomanToolbarMode("dragMode", "ობიექტების გადაადგილება");
+                return;
             }
         },
         true,
@@ -1237,12 +1384,7 @@ function switchYandexStyle(style: "old" | "new"): void {
     const targetUrl = style === "new" ? YANDEX_STYLE_NEW : YANDEX_STYLE_OLD;
     yandexLayer.setUrl(targetUrl);
 
-    syncStyleSwitcherUi(
-        "yandex",
-        "data-yandex-style",
-        style,
-        "Yandex",
-    );
+    syncStyleSwitcherUi("yandex", "data-yandex-style", style, "Yandex");
 
     // If not currently on Yandex, switch map to Yandex
     if (currentProvider !== "yandex") {
@@ -1278,12 +1420,7 @@ function switchGoogleStyle(style: "full" | "filtered"): void {
         style === "filtered" ? GOOGLE_STYLE_FILTERED : GOOGLE_STYLE_FULL;
     googleStreetLayer.setUrl(targetUrl);
 
-    syncStyleSwitcherUi(
-        "google",
-        "data-google-style",
-        style,
-        "Google Maps",
-    );
+    syncStyleSwitcherUi("google", "data-google-style", style, "Google Maps");
 
     // If not currently on Google, switch map to Google
     if (currentProvider !== "google-street") {
