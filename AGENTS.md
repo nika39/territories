@@ -53,3 +53,59 @@ const yandexLayer = L.tileLayer(
   }
 );
 ```
+
+## Google Maps Tiles Styling Rules & Gotchas (mt1.google.com)
+
+When using Google Maps raster tiles from `mt{0-3}.google.com/vt`:
+- **Endpoint**: `https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ka&apistyle=...`
+- **Projection**: Spherical Mercator (`EPSG:3857`).
+
+### 1. Style Parameter Syntax (`apistyle`)
+- Styles are passed via the **`apistyle=`** query parameter.
+- Each rule follows the syntax: `s.t:<featureType>|s.e:<elementType>|p.<property>:<value>`
+- **Multiple rules delimiter**: Join separate rules with a **comma (`,`)**:
+  ```
+  apistyle=<RULE_1>,<RULE_2>,<RULE_3>
+  ```
+
+### 2. Common Feature Types (`s.t`)
+- `s.t:0` — `all` (entire map)
+- `s.t:2` — `poi` (all Points of Interest: businesses, schools, parks, hospitals, etc.)
+- `s.t:33` — `poi.business` (commercial businesses, shops, restaurants, gas stations)
+- `s.t:40` — `poi.park` (parks & gardens)
+- `s.t:35` — `poi.school` (schools & universities)
+- `s.t:3` — `road` (roads, street labels, house numbers)
+- `s.t:4` — `transit` (public transport, bus stops, metro stations)
+
+### 3. Practical Examples
+
+#### A. Completely Clean Map (Only stops & addresses, no establishments)
+Hides all POIs (businesses, gyms, hospitals, churches) while keeping public transit stations:
+```
+apistyle=s.t:2|p.v:off,s.t:4|p.v:on
+```
+
+#### B. Hide Commercial Noise (Keeps parks, schools, public institutions & transit)
+Only hides businesses/restaurants/gas stations, leaving parks, schools, and hospitals intact:
+```
+apistyle=s.t:33|p.v:off
+```
+
+#### C. Grayscale / Muted Map
+Turns map black & white by setting saturation to -100:
+```
+apistyle=p.s:-100
+```
+
+### Full Example in Leaflet:
+```typescript
+// Filtered: only transit stops and addresses (no commercial POIs)
+const googleFilteredLayer = L.tileLayer(
+  "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ka&apistyle=s.t:2|p.v:off,s.t:4|p.v:on",
+  {
+    maxZoom: 21,
+    attribution: "&copy; Google",
+  }
+);
+```
+
