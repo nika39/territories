@@ -47,7 +47,7 @@ export function toggleDrawnOpaque(): void {
     showToast(
         state.isDrawnOpaque
             ? "შიგთავსი: გაუმჭვირვალე (კონტური გამოკვეთილია)"
-            : "შიგთავსი: გამჭვირვალე (0.15)",
+            : "შიგთავსი: გამჭვირვალე (0.1)",
     );
 }
 
