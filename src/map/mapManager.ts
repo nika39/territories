@@ -1,11 +1,12 @@
 import L from "leaflet";
+import type { MaptilerLayer } from "@maptiler/leaflet-maptilersdk";
 import { buildFeatureCollection } from "../drawing/geojsonExport";
 import { setupGeomanOnMap } from "../drawing/geomanSetup";
 import { trackedShapes } from "../drawing/shapeRegistry";
 import { state } from "../state";
 import { hideAppLoader } from "../ui/loader";
 import { applyUiVisibility } from "../ui/uiVisibility";
-import { layers } from "./providers";
+import { getLayerForProvider } from "./providers";
 
 /**
  * Snapshots drawn shapes so they survive the destruction of the map instance.
@@ -13,6 +14,47 @@ import { layers } from "./providers";
 function preserveDrawnShapes(): void {
     state.preservedDrawnGeoJson =
         trackedShapes.size > 0 ? buildFeatureCollection() : null;
+}
+
+/**
+ * Configures MapTiler SDK map instance to gracefully handle missing sprite icons
+ * and work around SDK teardown bugs when Leaflet destroys the map.
+ */
+function configureMaptilerSdkMap(
+    maptilerLayer: InstanceType<typeof MaptilerLayer>,
+): void {
+    const maptilerMap = maptilerLayer.getMaptilerSDKMap();
+    if (!maptilerMap) return;
+
+    // 1. Transparent 1x1 fallback pixel to prevent console errors for missing POI icons in custom sprite
+    const transparentPixel = {
+        width: 1,
+        height: 1,
+        data: new Uint8Array(4),
+    };
+    maptilerMap.on("styleimagemissing", (e: { id: string }) => {
+        if (e?.id && !maptilerMap.hasImage(e.id)) {
+            maptilerMap.addImage(e.id, transparentPixel);
+        }
+    });
+
+    // 2. Teardown bug workaround: MapLibre's remove() calls this.setStyle(null).
+    // MapTiler SDK's setStyle wrapper doesn't guard against null/empty style, falling back
+    // to deprecated "Streets Default v2" and logging "[Map.setStyle]: Invalid style".
+    // We delegate null style teardown directly to MapLibre's prototype setStyle.
+    const parentProto = Object.getPrototypeOf(
+        Object.getPrototypeOf(maptilerMap),
+    );
+    const maplibreSetStyle = parentProto?.setStyle;
+    const originalSetStyle = maptilerMap.setStyle.bind(maptilerMap);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (maptilerMap as any).setStyle = (style: any, options?: any) => {
+        if (!style && maplibreSetStyle) {
+            return maplibreSetStyle.call(maptilerMap, null, options);
+        }
+        return originalSetStyle(style, options);
+    };
 }
 
 /**
@@ -29,6 +71,8 @@ export function recreateMap(
         state.map.remove();
     }
 
+    state.currentProvider = provider;
+
     const isMaptiler = provider === "maptiler";
     const targetZoom = isMaptiler ? zoom : Math.round(zoom);
 
@@ -38,6 +82,7 @@ export function recreateMap(
         zoomControl: false,
         attributionControl: true,
         crs,
+        maxZoom: 22,
         zoomSnap: isMaptiler ? 0.5 : 1,
         zoomDelta: isMaptiler ? 0.5 : 1,
     });
@@ -47,11 +92,19 @@ export function recreateMap(
     applyUiVisibility();
 
     // Attach selected layer
-    const layer = layers[provider];
+    const layer = getLayerForProvider(provider);
     if (layer) {
         layer.addTo(map);
-        // Hide loader overlay once tiles are loaded
-        layer.on("load", hideAppLoader);
+
+        if (isMaptiler) {
+            configureMaptilerSdkMap(
+                layer as InstanceType<typeof MaptilerLayer>,
+            );
+            layer.once("ready", hideAppLoader);
+        } else {
+            // Hide loader overlay once tiles are loaded
+            layer.on("load", hideAppLoader);
+        }
     }
 
     // Initialize Geoman on the newly created map

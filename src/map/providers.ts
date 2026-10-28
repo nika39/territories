@@ -8,10 +8,12 @@ import {
 
 const maptilerApiKey: string = process.env.MAPTILER_API_KEY || "";
 
-const maptilerLayer = new MaptilerLayer({
-    apiKey: maptilerApiKey,
-    style: MAPTILER_STYLE_ID,
-});
+export function createMaptilerLayer(): InstanceType<typeof MaptilerLayer> {
+    return new MaptilerLayer({
+        apiKey: maptilerApiKey,
+        style: MAPTILER_STYLE_ID,
+    });
+}
 
 export const googleStreetLayer = L.tileLayer(GOOGLE_STYLE_FULL, {
     maxZoom: 21,
@@ -25,12 +27,22 @@ export const yandexLayer = L.tileLayer(YANDEX_STYLE_OLD, {
 
 /**
  * Tile layers keyed by provider id (matches `data-provider` in the markup).
+ * `maptiler` creates a fresh instance each time to avoid reusing destroyed WebGL contexts.
  */
 export const layers: Record<string, L.Layer> = {
-    maptiler: maptilerLayer,
+    get maptiler() {
+        return createMaptilerLayer();
+    },
     "google-street": googleStreetLayer,
     yandex: yandexLayer,
 };
+
+export function getLayerForProvider(provider: string): L.Layer | null {
+    if (provider === "maptiler") {
+        return createMaptilerLayer();
+    }
+    return layers[provider] ?? null;
+}
 
 /**
  * Yandex tiles use Elliptical Mercator (EPSG:3395), the rest Spherical Mercator.
