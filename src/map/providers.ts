@@ -2,17 +2,34 @@ import L from "leaflet";
 import { MaptilerLayer } from "@maptiler/leaflet-maptilersdk";
 import {
     GOOGLE_STYLE_FULL,
-    MAPTILER_STYLE_ID,
+    MAPTILER_STYLE_FULL,
     YANDEX_STYLE_OLD,
 } from "../config/constants";
 
 const maptilerApiKey: string = process.env.MAPTILER_API_KEY || "";
 
-export function createMaptilerLayer(): InstanceType<typeof MaptilerLayer> {
-    return new MaptilerLayer({
+let activeMaptilerLayer: InstanceType<typeof MaptilerLayer> | null = null;
+let currentMaptilerStyle: string = MAPTILER_STYLE_FULL;
+
+export function getActiveMaptilerLayer(): InstanceType<typeof MaptilerLayer> | null {
+    return activeMaptilerLayer;
+}
+
+export function getActiveMaptilerStyle(): string {
+    return currentMaptilerStyle;
+}
+
+export function setActiveMaptilerStyle(styleId: string): void {
+    currentMaptilerStyle = styleId;
+}
+
+export function createMaptilerLayer(styleId?: string): InstanceType<typeof MaptilerLayer> {
+    const style = styleId ?? currentMaptilerStyle;
+    activeMaptilerLayer = new MaptilerLayer({
         apiKey: maptilerApiKey,
-        style: MAPTILER_STYLE_ID,
+        style,
     });
+    return activeMaptilerLayer;
 }
 
 export const googleStreetLayer = L.tileLayer(GOOGLE_STYLE_FULL, {

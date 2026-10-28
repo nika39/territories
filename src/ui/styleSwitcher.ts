@@ -1,11 +1,17 @@
-import type L from "leaflet";
 import {
     GOOGLE_STYLE_FILTERED,
     GOOGLE_STYLE_FULL,
+    MAPTILER_STYLE_FILTERED,
+    MAPTILER_STYLE_FULL,
     YANDEX_STYLE_NEW,
     YANDEX_STYLE_OLD,
 } from "../config/constants";
-import { googleStreetLayer, yandexLayer } from "../map/providers";
+import {
+    getActiveMaptilerLayer,
+    googleStreetLayer,
+    setActiveMaptilerStyle,
+    yandexLayer,
+} from "../map/providers";
 import { state } from "../state";
 import { byId } from "../utils/dom";
 import { showToast } from "./toast";
@@ -14,16 +20,31 @@ import { showToast } from "./toast";
  * Describes a map provider that exposes several selectable tile styles.
  */
 interface StyleProviderConfig {
-    prefix: "yandex" | "google";
+    prefix: "yandex" | "google" | "maptiler";
     /** Provider id as used by `data-provider` and the `layers` record. */
-    providerKey: "yandex" | "google-street";
-    dataAttr: "data-yandex-style" | "data-google-style";
+    providerKey: "yandex" | "google-street" | "maptiler";
+    dataAttr: "data-yandex-style" | "data-google-style" | "data-maptiler-style";
     title: string;
-    layer: L.TileLayer;
-    /** Tile URL for each selectable style. */
+    /** Tile URL or Style ID for each selectable style. */
     urls: Record<string, string>;
     activeStyle: string;
+    applyStyle: (styleKey: string) => void;
 }
+
+const YANDEX_URLS: Record<string, string> = {
+    old: YANDEX_STYLE_OLD,
+    new: YANDEX_STYLE_NEW,
+};
+
+const GOOGLE_URLS: Record<string, string> = {
+    full: GOOGLE_STYLE_FULL,
+    filtered: GOOGLE_STYLE_FILTERED,
+};
+
+const MAPTILER_URLS: Record<string, string> = {
+    full: MAPTILER_STYLE_FULL,
+    filtered: MAPTILER_STYLE_FILTERED,
+};
 
 const STYLE_PROVIDERS: StyleProviderConfig[] = [
     {
@@ -31,18 +52,37 @@ const STYLE_PROVIDERS: StyleProviderConfig[] = [
         providerKey: "yandex",
         dataAttr: "data-yandex-style",
         title: "Yandex",
-        layer: yandexLayer,
-        urls: { old: YANDEX_STYLE_OLD, new: YANDEX_STYLE_NEW },
+        urls: YANDEX_URLS,
         activeStyle: "old",
+        applyStyle: (styleKey) => {
+            yandexLayer.setUrl(YANDEX_URLS[styleKey]);
+        },
     },
     {
         prefix: "google",
         providerKey: "google-street",
         dataAttr: "data-google-style",
         title: "Google Maps",
-        layer: googleStreetLayer,
-        urls: { full: GOOGLE_STYLE_FULL, filtered: GOOGLE_STYLE_FILTERED },
+        urls: GOOGLE_URLS,
         activeStyle: "full",
+        applyStyle: (styleKey) => {
+            googleStreetLayer.setUrl(GOOGLE_URLS[styleKey]);
+        },
+    },
+    {
+        prefix: "maptiler",
+        providerKey: "maptiler",
+        dataAttr: "data-maptiler-style",
+        title: "MapTiler",
+        urls: MAPTILER_URLS,
+        activeStyle: "full",
+        applyStyle: (styleKey) => {
+            const styleId = MAPTILER_URLS[styleKey];
+            setActiveMaptilerStyle(styleId);
+            if (state.currentProvider === "maptiler") {
+                getActiveMaptilerLayer()?.setStyle(styleId);
+            }
+        },
     },
 ];
 
@@ -113,7 +153,7 @@ function switchStyle(cfg: StyleProviderConfig, style: string): void {
     }
     cfg.activeStyle = style;
 
-    cfg.layer.setUrl(cfg.urls[style]);
+    cfg.applyStyle(style);
     syncStyleSwitcherUi(cfg, style);
 
     // If not currently on this provider, switch the map to it

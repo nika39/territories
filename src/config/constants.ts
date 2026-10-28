@@ -10,7 +10,9 @@ export const DEFAULT_DRAW_COLOR = "#007aff";
 export const TOAST_DURATION_MS = 1800;
 export const LOADER_FALLBACK_MS = 3000;
 
-export const MAPTILER_STYLE_ID = "01a120ea-26f0-7a1d-b08e-4c63cf192ffd";
+export const MAPTILER_STYLE_FULL = "01a120ea-26f0-7a1d-b08e-4c63cf192ffd";
+export const MAPTILER_STYLE_FILTERED = "01a183f3-3273-7288-9476-f489410fc9de";
+export const MAPTILER_STYLE_ID = MAPTILER_STYLE_FULL;
 
 /**
  * Curated fill -> contour color pairs used when opaque mode is enabled.

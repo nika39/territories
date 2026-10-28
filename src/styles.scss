@@ -396,9 +396,10 @@ html {
         }
     }
 
-    /* Map Style Switchers (Yandex & Google) */
+    /* Map Style Switchers (Yandex, Google & MapTiler) */
     .yandex-style-switcher,
-    .google-style-switcher {
+    .google-style-switcher,
+    .maptiler-style-switcher {
         margin-top: 10px;
         padding: 9px 10px;
         background: rgba(0, 0, 0, 0.2);
@@ -408,14 +409,16 @@ html {
         animation: fadeInYandexSwitcher 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 
         .yandex-style-header,
-        .google-style-header {
+        .google-style-header,
+        .maptiler-style-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 7px;
 
             .yandex-style-title,
-            .google-style-title {
+            .google-style-title,
+            .maptiler-style-title {
                 display: flex;
                 align-items: center;
                 gap: 5px;
@@ -431,7 +434,8 @@ html {
             }
 
             .yandex-style-badge,
-            .google-style-badge {
+            .google-style-badge,
+            .maptiler-style-badge {
                 font-size: 0.65rem;
                 padding: 1px 6px;
                 border-radius: 10px;
@@ -443,7 +447,8 @@ html {
         }
 
         .yandex-style-buttons,
-        .google-style-buttons {
+        .google-style-buttons,
+        .maptiler-style-buttons {
             display: flex;
             background: rgba(0, 0, 0, 0.25);
             border: 1px solid $border-light;
@@ -453,7 +458,8 @@ html {
         }
 
         .yandex-style-btn,
-        .google-style-btn {
+        .google-style-btn,
+        .maptiler-style-btn {
             flex: 1;
             background: transparent;
             border: none;

@@ -109,3 +109,13 @@ const googleFilteredLayer = L.tileLayer(
 );
 ```
 
+## MapTiler SDK & Styles
+
+- **Projection**: Spherical Mercator (`EPSG:3857`).
+- **Styles**:
+  - `MAPTILER_STYLE_FULL`: `01a120ea-26f0-7a1d-b08e-4c63cf192ffd` (all labels)
+  - `MAPTILER_STYLE_FILTERED`: `01a183f3-3273-7288-9476-f489410fc9de` (filtered, street labels hidden)
+- **Dynamic switching**: Use `maptilerLayer.setStyle(styleId)` without destroying the Leaflet map.
+- **Teardown**: Guard against MapLibre's `setStyle(null)` inside `configureMaptilerSdkMap` to delegate null teardown to MapLibre's prototype setStyle.
+
+
