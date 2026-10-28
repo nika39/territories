@@ -181,6 +181,30 @@ export function deleteTrackedShape(id: string, notify = true): void {
 }
 
 /**
+ * Updates the color of an existing tracked shape and refreshes its layer on the map.
+ */
+export function updateShapeColor(id: string, newColor: string): void {
+    const shape = trackedShapes.get(id);
+    if (!shape) return;
+
+    if (shape.color.toLowerCase() === newColor.toLowerCase()) {
+        showToast(`${shape.name} უკვე ამ ფერისაა`);
+        return;
+    }
+
+    shape.color = newColor;
+
+    if (shape.layer instanceof L.Polygon) {
+        shape.layer.setStyle(getGeomanPathOptions(newColor));
+    } else if (shape.layer instanceof L.Marker) {
+        shape.layer.setIcon(createPinIcon(newColor));
+    }
+
+    notifyShapesChanged();
+    showToast(`${shape.name}-ს ფერი შეიცვალა`);
+}
+
+/**
  * Deletes every tracked shape without per-item notifications.
  */
 export function deleteAllTrackedShapes(): void {

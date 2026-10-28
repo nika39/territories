@@ -966,13 +966,51 @@ body.ui-hidden {
                 flex: 1;
                 min-width: 0;
 
-                .item-color-dot {
-                    width: 12px;
-                    height: 12px;
-                    border-radius: 50%;
+                .item-color-btn {
+                    padding: 0;
+                    margin: 0;
+                    border: none;
+                    background: transparent;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    outline: none;
                     flex-shrink: 0;
+                    border-radius: 50%;
+                    transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+                                filter 0.15s ease,
+                                box-shadow 0.15s ease;
+
+                    &:hover {
+                        transform: scale(1.3);
+                        filter: brightness(1.2);
+                    }
+
+                    &:active {
+                        transform: scale(0.9);
+                    }
+                }
+
+                .item-color-dot {
+                    width: 13px;
+                    height: 13px;
+                    border-radius: 50%;
                     box-sizing: border-box;
-                    transition: all 0.2s ease;
+
+                    &:hover {
+                        box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+                    }
+                }
+
+                .item-color-pin {
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 4px;
+
+                    &:hover {
+                        filter: brightness(1.25) drop-shadow(0 0 4px rgba(255, 255, 255, 0.4));
+                    }
                 }
 
                 .item-info {

@@ -1,5 +1,9 @@
 import L from "leaflet";
-import { deleteTrackedShape, trackedShapes } from "../drawing/shapeRegistry";
+import {
+    deleteTrackedShape,
+    trackedShapes,
+    updateShapeColor,
+} from "../drawing/shapeRegistry";
 import { copySingleShapeGeoJson } from "../drawing/geojsonExport";
 import { getContourColor } from "../drawing/styles";
 import { state } from "../state";
@@ -15,14 +19,17 @@ import {
 import { showToast } from "./toast";
 
 function renderShapeIcon(shape: TrackedShape): string {
+    const title = "ფერის შეცვლა (დააკლიკეთ არჩეული ფერით შესაღებად)";
     if (shape.shapeType === "Marker") {
-        return renderListPinIcon(shape.color);
+        return `<button type="button" class="item-color-btn item-color-pin" title="${title}" aria-label="${title}">
+            ${renderListPinIcon(shape.color)}
+        </button>`;
     }
     const border = state.isDrawnOpaque
         ? getContourColor(shape.color)
         : "transparent";
     const dotStyle = `background-color: ${shape.color}; border: 2px solid ${border};`;
-    return `<span class="item-color-dot" style="${dotStyle}"></span>`;
+    return `<button type="button" class="item-color-btn item-color-dot" style="${dotStyle}" title="${title}" aria-label="${title}"></button>`;
 }
 
 /**
@@ -70,9 +77,13 @@ function createShapeCard(shape: TrackedShape): HTMLElement {
         </div>
     `;
 
-    const bindAction = (selector: string, handler: () => void) =>
+    const bindAction = (selector: string, handler: (e: Event) => void) =>
         card.querySelector(selector)?.addEventListener("click", handler);
 
+    bindAction(".item-color-btn", (e) => {
+        e.stopPropagation();
+        updateShapeColor(shape.id, state.activeDrawColor);
+    });
     bindAction(".focus-btn", () => focusShape(shape));
     bindAction(".copy-btn", () => copySingleShapeGeoJson(shape.id));
     bindAction(".delete-btn", () => deleteTrackedShape(shape.id));
