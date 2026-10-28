@@ -12,12 +12,13 @@ import {
     setActiveMaptilerStyle,
     yandexLayer,
 } from "../map/providers";
+import type { LabelStyleMode } from "../state";
 import { state } from "../state";
 import { byId } from "../utils/dom";
 import { showToast } from "./toast";
 
 /**
- * Describes a map provider that exposes several selectable tile styles.
+ * Describes a map provider that exposes selectable tile styles for label modes.
  */
 interface StyleProviderConfig {
     prefix: "yandex" | "google" | "maptiler";
@@ -25,10 +26,8 @@ interface StyleProviderConfig {
     providerKey: "yandex" | "google-street" | "maptiler";
     dataAttr: "data-yandex-style" | "data-google-style" | "data-maptiler-style";
     title: string;
-    /** Tile URL or Style ID for each selectable style. */
-    urls: Record<string, string>;
-    activeStyle: string;
-    applyStyle: (styleKey: string) => void;
+    styleKeyByMode: Record<LabelStyleMode, string>;
+    applyStyle: (mode: LabelStyleMode) => void;
 }
 
 const YANDEX_URLS: Record<string, string> = {
@@ -52,10 +51,13 @@ const STYLE_PROVIDERS: StyleProviderConfig[] = [
         providerKey: "yandex",
         dataAttr: "data-yandex-style",
         title: "Yandex",
-        urls: YANDEX_URLS,
-        activeStyle: "old",
-        applyStyle: (styleKey) => {
-            yandexLayer.setUrl(YANDEX_URLS[styleKey]);
+        styleKeyByMode: {
+            all: "old",
+            filtered: "new",
+        },
+        applyStyle: (mode) => {
+            const key = mode === "filtered" ? "new" : "old";
+            yandexLayer.setUrl(YANDEX_URLS[key]);
         },
     },
     {
@@ -63,10 +65,13 @@ const STYLE_PROVIDERS: StyleProviderConfig[] = [
         providerKey: "google-street",
         dataAttr: "data-google-style",
         title: "Google Maps",
-        urls: GOOGLE_URLS,
-        activeStyle: "full",
-        applyStyle: (styleKey) => {
-            googleStreetLayer.setUrl(GOOGLE_URLS[styleKey]);
+        styleKeyByMode: {
+            all: "full",
+            filtered: "filtered",
+        },
+        applyStyle: (mode) => {
+            const key = mode === "filtered" ? "filtered" : "full";
+            googleStreetLayer.setUrl(GOOGLE_URLS[key]);
         },
     },
     {
@@ -74,10 +79,13 @@ const STYLE_PROVIDERS: StyleProviderConfig[] = [
         providerKey: "maptiler",
         dataAttr: "data-maptiler-style",
         title: "MapTiler",
-        urls: MAPTILER_URLS,
-        activeStyle: "full",
-        applyStyle: (styleKey) => {
-            const styleId = MAPTILER_URLS[styleKey];
+        styleKeyByMode: {
+            all: "full",
+            filtered: "filtered",
+        },
+        applyStyle: (mode) => {
+            const key = mode === "filtered" ? "filtered" : "full";
+            const styleId = MAPTILER_URLS[key];
             setActiveMaptilerStyle(styleId);
             if (state.currentProvider === "maptiler") {
                 getActiveMaptilerLayer()?.setStyle(styleId);
@@ -99,38 +107,6 @@ export function updateStyleSwitcherVisibility(provider: string): void {
 }
 
 /**
- * Synchronizes the style switcher UI (active button, badge text, and toast notification)
- * using the HTML DOM elements as the single source of truth.
- */
-function syncStyleSwitcherUi(cfg: StyleProviderConfig, style: string): void {
-    const activeBtn = document.querySelector<HTMLElement>(
-        `.${cfg.prefix}-style-btn[${cfg.dataAttr}="${style}"]`,
-    );
-
-    // 1. Toggle active state on buttons
-    document.querySelectorAll(`.${cfg.prefix}-style-btn`).forEach((btn) => {
-        btn.classList.toggle("active", btn === activeBtn);
-    });
-
-    if (!activeBtn) return;
-
-    // 2. Derive badge label directly from button text
-    const badge = byId(`${cfg.prefix}-style-badge`);
-    const label = activeBtn
-        .querySelector("span:not(.dot)")
-        ?.textContent?.trim();
-    if (badge && label) {
-        badge.textContent = label;
-    }
-
-    // 3. Derive toast notification directly from button title
-    const titleText = activeBtn.getAttribute("title");
-    if (titleText) {
-        showToast(`${cfg.title}: ${titleText}`);
-    }
-}
-
-/**
  * Switches the map to the given provider by clicking its switcher button.
  */
 function activateProvider(providerKey: string): void {
@@ -142,38 +118,75 @@ function activateProvider(providerKey: string): void {
 }
 
 /**
- * Applies a tile style to its provider layer and updates the UI.
+ * Updates the shared label style mode across all providers, syncing
+ * their layers and their corresponding switcher UI controls.
  */
-function switchStyle(cfg: StyleProviderConfig, style: string): void {
-    if (
-        cfg.activeStyle === style &&
-        state.currentProvider === cfg.providerKey
-    ) {
-        return;
-    }
-    cfg.activeStyle = style;
+export function setLabelStyleMode(
+    mode: LabelStyleMode,
+    notifyProviderKey?: string,
+): void {
+    state.labelStyleMode = mode;
 
-    cfg.applyStyle(style);
-    syncStyleSwitcherUi(cfg, style);
+    STYLE_PROVIDERS.forEach((cfg) => {
+        const styleKey = cfg.styleKeyByMode[mode];
+        cfg.applyStyle(mode);
 
-    // If not currently on this provider, switch the map to it
-    if (state.currentProvider !== cfg.providerKey) {
-        activateProvider(cfg.providerKey);
-    }
+        const activeBtn = document.querySelector<HTMLElement>(
+            `.${cfg.prefix}-style-btn[${cfg.dataAttr}="${styleKey}"]`,
+        );
+
+        // 1. Toggle active state on buttons
+        document.querySelectorAll(`.${cfg.prefix}-style-btn`).forEach((btn) => {
+            btn.classList.toggle("active", btn === activeBtn);
+        });
+
+        // 2. Derive badge label directly from button text
+        const badge = byId(`${cfg.prefix}-style-badge`);
+        const label = activeBtn
+            ?.querySelector("span:not(.dot)")
+            ?.textContent?.trim();
+        if (badge && label) {
+            badge.textContent = label;
+        }
+
+        // 3. Derive toast notification if this is the active provider being notified
+        if (notifyProviderKey === cfg.providerKey && activeBtn) {
+            const titleText = activeBtn.getAttribute("title");
+            if (titleText) {
+                showToast(`${cfg.title}: ${titleText}`);
+            }
+        }
+    });
 }
 
 /**
  * Sets up the style toggle buttons for every provider that supports styles.
  */
 export function setupStyleSwitchers(): void {
+    // Synchronize all providers and switcher UI to the initial state
+    setLabelStyleMode(state.labelStyleMode);
     updateStyleSwitcherVisibility(state.currentProvider);
 
     STYLE_PROVIDERS.forEach((cfg) => {
         document.querySelectorAll(`.${cfg.prefix}-style-btn`).forEach((btn) => {
             btn.addEventListener("click", () => {
                 const style = btn.getAttribute(cfg.dataAttr);
-                if (style && Object.hasOwn(cfg.urls, style)) {
-                    switchStyle(cfg, style);
+                if (!style) return;
+
+                const mode: LabelStyleMode =
+                    style === cfg.styleKeyByMode.filtered ? "filtered" : "all";
+
+                if (
+                    mode === state.labelStyleMode &&
+                    state.currentProvider === cfg.providerKey
+                ) {
+                    return;
+                }
+
+                setLabelStyleMode(mode, cfg.providerKey);
+
+                if (state.currentProvider !== cfg.providerKey) {
+                    activateProvider(cfg.providerKey);
                 }
             });
         });
