@@ -4,7 +4,7 @@ import type { LatLngTuple } from "leaflet";
 export const INITIAL_CENTER: LatLngTuple = [41.677763, 44.848284];
 export const INITIAL_ZOOM = 16;
 
-export const DEFAULT_PROVIDER = "yandex";
+export const DEFAULT_PROVIDER = "maptiler";
 export const DEFAULT_DRAW_COLOR = "#007aff";
 
 export const TOAST_DURATION_MS = 1800;

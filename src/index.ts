@@ -27,7 +27,7 @@ function bootstrap(): void {
     // Keep the sidebar list in sync with the tracked shapes
     onShapesChanged(renderShapesList);
 
-    // Initialize default Yandex Maps view (EPSG:3395)
+    // Initialize default map provider
     recreateMap(
         getCrsForProvider(DEFAULT_PROVIDER),
         INITIAL_CENTER,
