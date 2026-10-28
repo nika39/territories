@@ -29,12 +29,17 @@ export function recreateMap(
         state.map.remove();
     }
 
+    const isMaptiler = provider === "maptiler";
+    const targetZoom = isMaptiler ? zoom : Math.round(zoom);
+
     const map = L.map("map-container", {
         center,
-        zoom,
+        zoom: targetZoom,
         zoomControl: false,
         attributionControl: true,
         crs,
+        zoomSnap: isMaptiler ? 0.5 : 1,
+        zoomDelta: isMaptiler ? 0.5 : 1,
     });
     state.map = map;
 
