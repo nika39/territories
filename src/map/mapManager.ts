@@ -85,6 +85,7 @@ export function recreateMap(
         maxZoom: 22,
         zoomSnap: isMaptiler ? 0.5 : 1,
         zoomDelta: isMaptiler ? 0.5 : 1,
+        zoomAnimation: !isMaptiler,
     });
     state.map = map;
 

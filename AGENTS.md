@@ -117,5 +117,6 @@ const googleFilteredLayer = L.tileLayer(
   - `MAPTILER_STYLE_FILTERED`: `01a183f3-3273-7288-9476-f489410fc9de` (filtered, street labels hidden)
 - **Dynamic switching**: Use `maptilerLayer.setStyle(styleId)` without destroying the Leaflet map.
 - **Teardown**: Guard against MapLibre's `setStyle(null)` inside `configureMaptilerSdkMap` to delegate null teardown to MapLibre's prototype setStyle.
+- **Zoom Animation**: Pass `zoomAnimation: false` to Leaflet map options for MapTiler to prevent CSS transitions from scaling/shrinking the WebGL canvas into a "small map" during zoom.
 
 
