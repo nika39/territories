@@ -87,6 +87,8 @@ export function registerDrawnLayer(
     const color = customColor || state.activeDrawColor;
 
     layer.setStyle(getGeomanPathOptions(color));
+    layer.options.snapIgnore = !state.isSnappingEnabled;
+    layer.pm?.setOptions({ snappable: state.isSnappingEnabled });
 
     const shape: TrackedShape = {
         id,
@@ -130,6 +132,8 @@ export function registerDrawnMarker(
 
     marker.setIcon(createPinIcon(color));
     marker.dragging?.enable();
+    marker.options.snapIgnore = !state.isSnappingEnabled;
+    marker.pm?.setOptions({ snappable: state.isSnappingEnabled });
 
     const shape: TrackedShape = {
         id,

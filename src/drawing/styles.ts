@@ -88,6 +88,7 @@ export function getDrawingStyleOptions(): Partial<L.PM.GlobalOptions> {
     const color = state.activeDrawColor;
     const contour = getContourColor(color);
     return {
+        snappable: state.isSnappingEnabled,
         templineStyle: {
             color: contour,
             weight: state.isDrawnOpaque ? 3 : 2,

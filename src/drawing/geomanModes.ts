@@ -111,18 +111,21 @@ const TOGGLE_CONFIGS: Record<GeomanToggleMode, ToggleConfig> = {
         isActive: (pm) =>
             pm.globalDrawModeEnabled() &&
             pm.Draw.getActiveShape() === "Polygon",
-        enable: (pm) => pm.enableDraw("Polygon"),
+        enable: (pm) =>
+            pm.enableDraw("Polygon", { snappable: state.isSnappingEnabled }),
     },
     drawMarker: {
         group: "draw",
         isActive: (pm) =>
             pm.globalDrawModeEnabled() && pm.Draw.getActiveShape() === "Marker",
-        enable: (pm) => pm.enableDraw("Marker"),
+        enable: (pm) =>
+            pm.enableDraw("Marker", { snappable: state.isSnappingEnabled }),
     },
     editMode: {
         group: "edit",
         isActive: (pm) => pm.globalEditModeEnabled(),
-        enable: (pm) => pm.enableGlobalEditMode(),
+        enable: (pm) =>
+            pm.enableGlobalEditMode({ snappable: state.isSnappingEnabled }),
     },
     dragMode: {
         group: "drag",

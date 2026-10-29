@@ -62,7 +62,45 @@ export function toggleSnapping(): void {
         state.isSnappingEnabled,
     );
 
-    state.map?.pm.setGlobalOptions({ snappable: state.isSnappingEnabled });
+    const map = state.map;
+    if (map && map.pm) {
+        map.pm.setGlobalOptions({ snappable: state.isSnappingEnabled });
+
+        // If a shape is currently being drawn, reset snap state on its active instance
+        const activeShape = map.pm.Draw.getActiveShape();
+        if (activeShape) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const drawInstance = (map.pm.Draw as any)[activeShape];
+            if (drawInstance) {
+                drawInstance.setOptions({ snappable: state.isSnappingEnabled });
+                if (!state.isSnappingEnabled) {
+                    drawInstance._cleanupSnapping?.();
+                    if (drawInstance._hintMarker) {
+                        drawInstance._hintMarker._snapped = false;
+                    }
+                }
+            }
+        }
+
+        // Synchronize all existing tracked shapes and layers
+        for (const shape of trackedShapes.values()) {
+            (shape.layer.options as L.LayerOptions).snapIgnore =
+                !state.isSnappingEnabled;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const pmLayer = (shape.layer as any).pm;
+            if (pmLayer) {
+                pmLayer.setOptions({ snappable: state.isSnappingEnabled });
+                if (!state.isSnappingEnabled) {
+                    pmLayer._cleanupSnapping?.();
+                    pmLayer._disableSnapping?.();
+                } else if (pmLayer.enabled()) {
+                    pmLayer.applyOptions?.();
+                }
+            }
+        }
+
+        map.pm.applyGlobalOptions();
+    }
 
     showToast(
         state.isSnappingEnabled
