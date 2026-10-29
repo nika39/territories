@@ -55,16 +55,18 @@ export function renderListPinIcon(color: string): string {
  */
 export function renderMapPinHtml(color: string): string {
     return `
-        <div class="building-pin" style="--pin-color: ${color};">
-            <svg viewBox="0 0 34 44" width="49" height="63" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17 2C9.268 2 3 8.268 3 16C3 26.5 17 41 17 41C17 41 31 26.5 31 16C31 8.268 24.732 2 17 2Z" 
-                      fill="${color}" 
-                      stroke="#FFFFFF" 
-                      stroke-width="2.4" 
-                      stroke-linejoin="round"/>
-                <circle cx="17" cy="16" r="6.2" fill="#FFFFFF"/>
-                <circle cx="17" cy="16" r="3" fill="${color}"/>
-            </svg>
+        <div class="building-pin-scaler">
+            <div class="building-pin" style="--pin-color: ${color};">
+                <svg viewBox="0 0 34 44" width="49" height="63" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17 2C9.268 2 3 8.268 3 16C3 26.5 17 41 17 41C17 41 31 26.5 31 16C31 8.268 24.732 2 17 2Z" 
+                          fill="${color}" 
+                          stroke="#FFFFFF" 
+                          stroke-width="2.4" 
+                          stroke-linejoin="round"/>
+                    <circle cx="17" cy="16" r="6.2" fill="#FFFFFF"/>
+                    <circle cx="17" cy="16" r="3" fill="${color}"/>
+                </svg>
+            </div>
         </div>
     `;
 }

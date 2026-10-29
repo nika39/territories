@@ -3,6 +3,7 @@ import type { MaptilerLayer } from "@maptiler/leaflet-maptilersdk";
 import { buildFeatureCollection } from "../drawing/geojsonExport";
 import { setupGeomanOnMap } from "../drawing/geomanSetup";
 import { trackedShapes } from "../drawing/shapeRegistry";
+import { updatePinScale } from "../drawing/styles";
 import { state } from "../state";
 import { hideAppLoader } from "../ui/loader";
 import { applyUiVisibility } from "../ui/uiVisibility";
@@ -88,6 +89,10 @@ export function recreateMap(
         zoomAnimation: !isMaptiler,
     });
     state.map = map;
+
+    // Synchronize pin scale with current zoom level
+    updatePinScale(map);
+    map.on("zoom zoomend viewreset", () => updatePinScale(map));
 
     // Ensure UI visibility class remains consistent on body
     applyUiVisibility();

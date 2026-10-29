@@ -33,6 +33,42 @@ export function getGeomanPathOptions(
 }
 
 /**
+ * Reference zoom level at which the pin marker has natural 100% scale (49x63px).
+ */
+export const PIN_REFERENCE_ZOOM = 19;
+export const PIN_ZOOM_FACTOR = 1.22;
+export const PIN_MIN_SCALE = 0.16;
+export const PIN_MAX_SCALE = 1.05;
+
+/**
+ * Calculates a smooth, perceptually balanced pin scale factor for a given map zoom level.
+ *
+ * Zoom mapping:
+ * - Zoom >= 19: Full size (1.0 - 1.05) - perfect for rooftop building inspection.
+ * - Zoom 16: ~0.55 (initial map zoom) - nicely proportioned for street/neighborhood blocks.
+ * - Zoom 14: ~0.37 - compact city district pin.
+ * - Zoom 12: ~0.25 - clean metropolitan dot.
+ * - Zoom <= 10: 0.16 (clamped floor) - visible pinpoint, never dominates regional map.
+ */
+export function getPinScaleForZoom(zoom: number): number {
+    const rawScale = Math.pow(PIN_ZOOM_FACTOR, zoom - PIN_REFERENCE_ZOOM);
+    return Math.min(PIN_MAX_SCALE, Math.max(PIN_MIN_SCALE, rawScale));
+}
+
+/**
+ * Applies the calculated scale for the current map zoom to the map container and root document.
+ */
+export function updatePinScale(map?: L.Map): void {
+    const currentMap = map || state.map;
+    if (!currentMap) return;
+    const zoom = currentMap.getZoom();
+    const scale = getPinScaleForZoom(zoom);
+    const scaleStr = scale.toFixed(3);
+    document.documentElement.style.setProperty("--pin-scale", scaleStr);
+    currentMap.getContainer()?.style.setProperty("--pin-scale", scaleStr);
+}
+
+/**
  * Creates custom high-visibility vector SVG pin marker icon.
  */
 export function createPinIcon(color = state.activeDrawColor): L.DivIcon {

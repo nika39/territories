@@ -1264,30 +1264,64 @@ body.ui-hidden {
    ========================================================================== */
 
 /* Custom High-Visibility Building Pin on Map */
+:root {
+    --pin-scale: 0.55;
+}
+
 .building-pin-wrapper {
     background: transparent !important;
     border: none !important;
+    pointer-events: none !important;
+}
+
+.building-pin-scaler {
+    width: 49px;
+    height: 63px;
+    transform-origin: 24.5px 59px;
+    transform: scale(var(--pin-scale, 0.55));
+    transition: transform 0.16s cubic-bezier(0.2, 0, 0, 1);
+    pointer-events: none;
 }
 
 .building-pin {
     position: relative;
+    width: 49px;
+    height: 63px;
+    transform-origin: 24.5px 59px;
     cursor: grab;
     user-select: none;
+    pointer-events: auto;
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    animation: pinDropBounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275)
-        forwards;
+    animation: pinDropBounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    // Subtle hit area expansion for comfortable clicks even when scaled down
+    &::after {
+        content: "";
+        position: absolute;
+        top: -6px;
+        left: -6px;
+        right: -6px;
+        bottom: -3px;
+        cursor: grab;
+    }
 
     &:active {
         cursor: grabbing;
-        transform: scale(1.18) translateY(-4px);
+        transform: scale(1.18) translateY(-4px) !important;
+
+        &::after {
+            cursor: grabbing;
+        }
     }
 
     &:hover {
-        transform: scale(1.14) translateY(-3px);
+        transform: scale(1.14) translateY(-3px) !important;
     }
 
     svg {
         display: block;
+        width: 100%;
+        height: 100%;
         filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.42));
     }
 }
