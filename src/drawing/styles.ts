@@ -24,7 +24,7 @@ export function getGeomanPathOptions(
         weight: opaque ? 3 : 2,
         opacity: 1,
         fillColor: color,
-        fillOpacity: opaque ? 1.0 : 0.1,
+        fillOpacity: opaque ? 1.0 : 0.15,
         fill: true,
         dashArray: opaque ? undefined : "6, 6",
         lineCap: "round",
