@@ -117,9 +117,13 @@ function bindGeomanEvents(mapInstance: L.Map): void {
     mapInstance.on("pm:remove", (e) => {
         for (const [id, s] of trackedShapes.entries()) {
             if (s.layer === e.layer) {
-                deleteTrackedShape(id, false);
+                deleteTrackedShape(id, true);
                 break;
             }
+        }
+        // Automatically exit removal mode after deleting an object
+        if (mapInstance.pm.globalRemovalModeEnabled()) {
+            mapInstance.pm.disableGlobalRemovalMode();
         }
     });
 }

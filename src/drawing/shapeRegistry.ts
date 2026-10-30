@@ -182,6 +182,11 @@ export function deleteTrackedShape(id: string, notify = true): void {
     if (notify) {
         showToast(`${deletedName} წაიშალა`);
     }
+
+    // Automatically exit removal mode if active
+    if (state.map?.pm?.globalRemovalModeEnabled()) {
+        state.map.pm.disableGlobalRemovalMode();
+    }
 }
 
 /**
