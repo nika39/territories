@@ -1,32 +1,19 @@
 import L from "leaflet";
-import { CONTOUR_COLOR_PAIRS } from "../config/constants";
 import { state } from "../state";
 import { renderMapPinHtml } from "../ui/icons";
-import { darkenHexColor } from "../utils/color";
-
-/**
- * Returns a UI specialist curated, slightly more prominent / deeper contour tone
- * of the inner fill color when opaque mode is enabled.
- * If opaque mode is disabled, the contour matches the fill color.
- */
-export function getContourColor(fillColor: string): string {
-    if (!state.isDrawnOpaque) return fillColor;
-    const curated = CONTOUR_COLOR_PAIRS[fillColor.toLowerCase()];
-    return curated ?? darkenHexColor(fillColor, 0.32);
-}
 
 export function getGeomanPathOptions(
     color = state.activeDrawColor,
 ): L.PathOptions {
-    const opaque = state.isDrawnOpaque;
+    const isSolid = state.isSolidLines;
     return {
-        color: getContourColor(color),
-        weight: opaque ? 3 : 2,
+        color,
+        weight: 2,
         opacity: 1,
         fillColor: color,
-        fillOpacity: opaque ? 1.0 : 0.15,
+        fillOpacity: isSolid ? 0 : 0.1,
         fill: true,
-        dashArray: opaque ? undefined : "6, 6",
+        dashArray: isSolid ? "" : "6, 6",
         lineCap: "round",
         lineJoin: "round",
     };
@@ -81,21 +68,21 @@ export function createPinIcon(color = state.activeDrawColor): L.DivIcon {
 }
 
 /**
- * Geoman global options that depend on the active color / opaque mode
+ * Geoman global options that depend on the active color / solid line mode
  * (drawing guide lines, polygon style and pin marker style).
  */
 export function getDrawingStyleOptions(): Partial<L.PM.GlobalOptions> {
     const color = state.activeDrawColor;
-    const contour = getContourColor(color);
+    const isSolid = state.isSolidLines;
     return {
         snappable: state.isSnappingEnabled,
         templineStyle: {
-            color: contour,
-            weight: state.isDrawnOpaque ? 3 : 2,
-            dashArray: state.isDrawnOpaque ? undefined : [6, 6],
+            color,
+            weight: isSolid ? 3 : 2,
+            dashArray: isSolid ? undefined : [6, 6],
         },
         hintlineStyle: {
-            color: contour,
+            color,
             dashArray: [5, 5],
         },
         pathOptions: getGeomanPathOptions(color),

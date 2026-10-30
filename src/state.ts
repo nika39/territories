@@ -16,6 +16,7 @@ export interface AppState {
     drawnItemsGroup: L.FeatureGroup | null;
     activeDrawColor: string;
     isSnappingEnabled: boolean;
+    isSolidLines: boolean;
     isDrawnOpaque: boolean;
     preservedDrawnGeoJson: GeoJSON.FeatureCollection | null;
 }
@@ -28,6 +29,12 @@ export const state: AppState = {
     drawnItemsGroup: null,
     activeDrawColor: DEFAULT_DRAW_COLOR,
     isSnappingEnabled: true,
-    isDrawnOpaque: false,
+    isSolidLines: false,
+    get isDrawnOpaque() {
+        return this.isSolidLines;
+    },
+    set isDrawnOpaque(val: boolean) {
+        this.isSolidLines = val;
+    },
     preservedDrawnGeoJson: null,
 };

@@ -22,15 +22,19 @@ export function setActiveDrawColor(color: string): void {
 }
 
 /**
- * Toggles opaque fill mode for marked shapes and synchronizes toolbar & map styles.
+ * Toggles solid line mode for marked shapes and synchronizes toolbar & map styles.
  */
-export function toggleDrawnOpaque(): void {
-    state.isDrawnOpaque = !state.isDrawnOpaque;
+export function toggleSolidLines(): void {
+    state.isSolidLines = !state.isSolidLines;
 
     // Update button active state on the on-map toolbar
+    byId("map-btn-solid-lines-container")?.classList.toggle(
+        "active",
+        state.isSolidLines,
+    );
     byId("map-btn-opaque-container")?.classList.toggle(
         "active",
-        state.isDrawnOpaque,
+        state.isSolidLines,
     );
 
     // Update all existing tracked polygons on map
@@ -45,11 +49,13 @@ export function toggleDrawnOpaque(): void {
     notifyShapesChanged();
 
     showToast(
-        state.isDrawnOpaque
-            ? "შიგთავსი: გაუმჭვირვალე"
-            : "შიგთავსი: გამჭვირვალე",
+        state.isSolidLines
+            ? "სწორხაზოვანი და გაუმჭვირვალე"
+            : "წყვეტილი და გამჭვირვალე",
     );
 }
+
+export const toggleDrawnOpaque = toggleSolidLines;
 
 /**
  * Toggles snapping mode for Geoman drawing tools and updates toolbar button state.

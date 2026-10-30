@@ -5,7 +5,6 @@ import {
     updateShapeColor,
 } from "../drawing/shapeRegistry";
 import { copySingleShapeGeoJson } from "../drawing/geojsonExport";
-import { getContourColor } from "../drawing/styles";
 import { state } from "../state";
 import type { TrackedShape } from "../types";
 import { byId } from "../utils/dom";
@@ -25,10 +24,7 @@ function renderShapeIcon(shape: TrackedShape): string {
             ${renderListPinIcon(shape.color)}
         </button>`;
     }
-    const border = state.isDrawnOpaque
-        ? getContourColor(shape.color)
-        : "transparent";
-    const dotStyle = `background-color: ${shape.color}; border: 2px solid ${border};`;
+    const dotStyle = `background-color: ${shape.color};`;
     return `<button type="button" class="item-color-btn item-color-dot" style="${dotStyle}" title="${title}" aria-label="${title}"></button>`;
 }
 

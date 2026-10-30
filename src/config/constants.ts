@@ -14,19 +14,6 @@ export const MAPTILER_STYLE_FULL = "01a120ea-26f0-7a1d-b08e-4c63cf192ffd";
 export const MAPTILER_STYLE_FILTERED = "01a183f3-3273-7288-9476-f489410fc9de";
 export const MAPTILER_STYLE_ID = MAPTILER_STYLE_FULL;
 
-/**
- * Curated fill -> contour color pairs used when opaque mode is enabled.
- */
-export const CONTOUR_COLOR_PAIRS: Record<string, string> = {
-    "#007aff": "#004bb5", // ლურჯი
-    "#34c759": "#30b657", // მწვანე
-    "#ff9500": "#b85900", // ნარინჯისფერი
-    "#ff3b30": "#e13930", // წითელი
-    "#af52de": "#6e2096", // იისფერი
-    "#ffcc00": "#b38f00", // ყვითელი
-    "#5ac8fa": "#008ac7", // ცისფერი
-};
-
 // ----------------------------------------------------------------------------
 // Google Maps tile styles
 // ----------------------------------------------------------------------------

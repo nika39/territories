@@ -1,7 +1,7 @@
 import L from "leaflet";
 import { state } from "../state";
-import { OPACITY_ICON_SVG, SNAPPING_ICON_SVG } from "../ui/icons";
-import { toggleDrawnOpaque, toggleSnapping } from "./drawingOptions";
+import { SOLID_LINE_ICON_SVG, SNAPPING_ICON_SVG } from "../ui/icons";
+import { toggleSolidLines, toggleSnapping } from "./drawingOptions";
 
 interface OptionButton {
     containerId: string;
@@ -15,12 +15,12 @@ interface OptionButton {
 function getOptionButtons(): OptionButton[] {
     return [
         {
-            containerId: "map-btn-opaque-container",
-            buttonId: "map-btn-toggle-opaque",
-            title: "გაუმჭვირვალე შიგთავსი",
-            icon: OPACITY_ICON_SVG,
-            isActive: () => state.isDrawnOpaque,
-            onClick: toggleDrawnOpaque,
+            containerId: "map-btn-solid-lines-container",
+            buttonId: "map-btn-toggle-solid-lines",
+            title: "სწორხაზოვანი კონტური",
+            icon: SOLID_LINE_ICON_SVG,
+            isActive: () => state.isSolidLines,
+            onClick: toggleSolidLines,
         },
         {
             containerId: "map-btn-snapping-container",
