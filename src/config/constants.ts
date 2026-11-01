@@ -41,13 +41,13 @@ function buildYandexStyleUrl(rules: string[]): string {
 
 export const YANDEX_STYLE_OLD = buildYandexStyleUrl([
     "tags.any:commercial_services|stylers.visibility:off",
-    // "tags.any:entrance|stylers.visibility:off",
+    "tags.any:entrance|stylers.visibility:off",
     YANDEX_HIDE_ROAD_ICONS_RULE,
 ]);
 
 export const YANDEX_STYLE_NEW = buildYandexStyleUrl([
     "tags.any:poi|tags.none:parking|tags.none:cemetery|stylers.visibility:off",
-    // "tags.any:entrance|stylers.visibility:off",
+    "tags.any:entrance|stylers.visibility:off",
     "tags.any:food_and_drink|tags.any:shopping|tags.any:commercial_services|stylers.visibility:off",
     YANDEX_HIDE_ROAD_ICONS_RULE,
 ]);
