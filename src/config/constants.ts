@@ -14,7 +14,8 @@ export const MAPTILER_STYLE_FULL = "01a120ea-26f0-7a1d-b08e-4c63cf192ffd";
 export const MAPTILER_STYLE_FILTERED = "01a183f3-3273-7288-9476-f489410fc9de";
 export const MAPTILER_STYLE_ID = MAPTILER_STYLE_FULL;
 
-export const EXPORT_4K_TARGET_WIDTH = 3840;
+export const EXPORT_TARGET_WIDTH = 4384;
+export const EXPORT_4K_TARGET_WIDTH = EXPORT_TARGET_WIDTH;
 
 // ----------------------------------------------------------------------------
 // Google Maps tile styles (scale=2 for high-resolution Retina 512x512 tiles)

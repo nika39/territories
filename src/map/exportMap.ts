@@ -1,5 +1,5 @@
 import L from "leaflet";
-import { EXPORT_4K_TARGET_WIDTH } from "../config/constants";
+import { EXPORT_TARGET_WIDTH } from "../config/constants";
 import { trackedShapes } from "../drawing/shapeRegistry";
 import { getPinScaleForZoom } from "../drawing/styles";
 import { state } from "../state";
@@ -64,7 +64,7 @@ async function waitForPendingTiles(mapContainer: HTMLElement): Promise<void> {
 
 /**
  * Renders the underlying base map (MapTiler WebGL vector canvas or Google/Yandex raster tiles)
- * onto the target 4K canvas context.
+ * onto the target canvas context.
  */
 async function renderBaseMap(
     map: L.Map,
@@ -72,6 +72,8 @@ async function renderBaseMap(
     targetWidth: number,
     targetHeight: number,
     scaleFactor: number,
+    offsetX: number,
+    offsetY: number,
 ): Promise<void> {
     const provider = state.currentProvider;
     const mapContainer = map.getContainer();
@@ -83,9 +85,8 @@ async function renderBaseMap(
 
         if (maptilerMap && typeof maptilerMap.setPixelRatio === "function") {
             const originalPixelRatio = maptilerMap.getPixelRatio();
-            const exportPixelRatio = targetWidth / mapContainer.clientWidth;
 
-            maptilerMap.setPixelRatio(exportPixelRatio);
+            maptilerMap.setPixelRatio(scaleFactor);
             maptilerMap.redraw();
 
             await new Promise<void>((resolve) => {
@@ -104,7 +105,9 @@ async function renderBaseMap(
                 ".maplibregl-canvas",
             );
             if (canvas) {
-                ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
+                const drawWidth = mapContainer.clientWidth * scaleFactor;
+                const drawHeight = mapContainer.clientHeight * scaleFactor;
+                ctx.drawImage(canvas, offsetX, offsetY, drawWidth, drawHeight);
             }
 
             maptilerMap.setPixelRatio(originalPixelRatio);
@@ -116,7 +119,9 @@ async function renderBaseMap(
             ".maplibregl-canvas",
         );
         if (fallbackCanvas) {
-            ctx.drawImage(fallbackCanvas, 0, 0, targetWidth, targetHeight);
+            const drawWidth = mapContainer.clientWidth * scaleFactor;
+            const drawHeight = mapContainer.clientHeight * scaleFactor;
+            ctx.drawImage(fallbackCanvas, offsetX, offsetY, drawWidth, drawHeight);
             return;
         }
     }
@@ -142,8 +147,8 @@ async function renderBaseMap(
         if (opacity === 0) return;
 
         const tileRect = img.getBoundingClientRect();
-        const x = (tileRect.left - mapRect.left) * scaleFactor;
-        const y = (tileRect.top - mapRect.top) * scaleFactor;
+        const x = (tileRect.left - mapRect.left) * scaleFactor + offsetX;
+        const y = (tileRect.top - mapRect.top) * scaleFactor + offsetY;
         const w = tileRect.width * scaleFactor;
         const h = tileRect.height * scaleFactor;
 
@@ -156,7 +161,7 @@ async function renderBaseMap(
             ctx.globalAlpha = opacity;
         }
         try {
-            ctx.drawImage(img, x, y, w, h);
+            ctx.drawImage(img, x, y, w + 0.5, h + 0.5);
         } catch {
             // Gracefully ignore any cross-origin error on stray tiles
         }
@@ -165,12 +170,14 @@ async function renderBaseMap(
 }
 
 /**
- * Draws all user-added polygons, rectangles, and pins onto the 4K canvas.
+ * Draws all user-added polygons, rectangles, and pins onto the target canvas.
  */
 function renderUserShapes(
     map: L.Map,
     ctx: CanvasRenderingContext2D,
     scaleFactor: number,
+    offsetX: number,
+    offsetY: number,
 ): void {
     const isSolid = state.isSolidLines;
 
@@ -194,8 +201,8 @@ function renderUserShapes(
                     if (!Array.isArray(ring) || ring.length < 3) return;
                     for (let i = 0; i < ring.length; i++) {
                         const pt = map.latLngToContainerPoint(ring[i]);
-                        const x = pt.x * scaleFactor;
-                        const y = pt.y * scaleFactor;
+                        const x = pt.x * scaleFactor + offsetX;
+                        const y = pt.y * scaleFactor + offsetY;
                         if (i === 0) {
                             ctx.moveTo(x, y);
                         } else {
@@ -239,7 +246,7 @@ function renderUserShapes(
             const s = (49 / 34) * zoomPinScale * scaleFactor;
 
             ctx.save();
-            ctx.translate(pt.x * scaleFactor, pt.y * scaleFactor);
+            ctx.translate(pt.x * scaleFactor + offsetX, pt.y * scaleFactor + offsetY);
             ctx.scale(s, s);
             ctx.translate(-17, -41);
 
@@ -280,10 +287,11 @@ function renderUserShapes(
 }
 
 /**
- * Downloads a crisp 4K (3840px) resolution PNG image of the current map view
- * including all drawn polygons, rectangles, and pins, while excluding all UI overlays.
+ * Downloads a crisp ultra-high resolution (4384px width, preserving exact screen aspect ratio)
+ * PNG image of the current map view including all drawn polygons, rectangles, and pins,
+ * without stretching and without cropping any visible content.
  */
-export async function downloadMap4KImage(): Promise<void> {
+export async function downloadMapImage(): Promise<void> {
     if (isExporting) return;
     const map = state.map;
     if (!map) {
@@ -299,14 +307,17 @@ export async function downloadMap4KImage(): Promise<void> {
     if (clientWidth === 0 || clientHeight === 0) return;
 
     isExporting = true;
-    showToast("4K სურათი მზადდება...");
+    showToast("მაღალი ხარისხის სურათი მზადდება...");
 
     const downloadBtn = document.getElementById("map-btn-download-4k");
     downloadBtn?.classList.add("loading");
 
     try {
         const aspectRatio = clientWidth / clientHeight;
-        const targetWidth = EXPORT_4K_TARGET_WIDTH;
+        const targetWidth = Math.max(
+            EXPORT_TARGET_WIDTH,
+            Math.round(clientWidth * (window.devicePixelRatio || 1)),
+        );
         const targetHeight = Math.round(targetWidth / aspectRatio);
         const scaleFactor = targetWidth / clientWidth;
 
@@ -325,10 +336,18 @@ export async function downloadMap4KImage(): Promise<void> {
         ctx.imageSmoothingQuality = "high";
 
         // 1. Draw base map layer (MapTiler / Google / Yandex)
-        await renderBaseMap(map, ctx, targetWidth, targetHeight, scaleFactor);
+        await renderBaseMap(
+            map,
+            ctx,
+            targetWidth,
+            targetHeight,
+            scaleFactor,
+            0,
+            0,
+        );
 
         // 2. Draw user added rectangles, polygons, and pins
-        renderUserShapes(map, ctx, scaleFactor);
+        renderUserShapes(map, ctx, scaleFactor, 0, 0);
 
         // 3. Export to PNG Blob and trigger browser download
         await new Promise<void>((resolve, reject) => {
@@ -344,13 +363,13 @@ export async function downloadMap4KImage(): Promise<void> {
                         .toISOString()
                         .replace(/[:.]/g, "-")
                         .slice(0, 19);
-                    a.download = `map-4k-${state.currentProvider}-${dateStr}.png`;
+                    a.download = `map-${targetWidth}x${targetHeight}-${state.currentProvider}-${dateStr}.png`;
                     a.href = url;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     setTimeout(() => URL.revokeObjectURL(url), 5000);
-                    showToast("4K სურათი წარმატებით ჩამოიტვირთა");
+                    showToast(`სურათი წარმატებით ჩამოიტვირთა (${targetWidth}x${targetHeight})`);
                     resolve();
                 },
                 "image/png",
@@ -358,10 +377,12 @@ export async function downloadMap4KImage(): Promise<void> {
             );
         });
     } catch (err) {
-        console.error("4K Export Error:", err);
+        console.error("Map Export Error:", err);
         showToast("სურათის გადმოწერა ვერ მოხერხდა");
     } finally {
         isExporting = false;
         downloadBtn?.classList.remove("loading");
     }
 }
+
+export const downloadMap4KImage = downloadMapImage;

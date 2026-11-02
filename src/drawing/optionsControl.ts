@@ -38,7 +38,7 @@ function getOptionButtons(): OptionButton[] {
         {
             containerId: "map-btn-download-4k-container",
             buttonId: "map-btn-download-4k",
-            title: "4K რუკის გადმოწერა",
+            title: "რუკის მაღალი ხარისხით გადმოწერა (4384px)",
             icon: DOWNLOAD_4K_ICON_SVG,
             isActive: () => false,
             onClick: () => {
