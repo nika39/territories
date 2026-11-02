@@ -21,9 +21,9 @@ export const MAPTILER_STYLE_ID = MAPTILER_STYLE_FULL;
 const GOOGLE_BASE_URL =
     "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ka";
 
-export const GOOGLE_STYLE_FULL = GOOGLE_BASE_URL;
+export const GOOGLE_STYLE_FULL = `${GOOGLE_BASE_URL}&apistyle=s.t:81|p.s:-100`;
 
-export const GOOGLE_STYLE_FILTERED = `${GOOGLE_BASE_URL}&apistyle=s.t:2|p.v:off,s.t:4|p.v:on`;
+export const GOOGLE_STYLE_FILTERED = `${GOOGLE_BASE_URL}&apistyle=s.t:2|p.v:off,s.t:40|s.e:g|p.v:on,s.t:4|p.v:on,s.t:3|s.e:l|p.v:off,s.t:81|p.s:-100`;
 
 // ----------------------------------------------------------------------------
 // Yandex tile styles (rules are joined with `~` inside a single `style=` param)
