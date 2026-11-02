@@ -1,7 +1,6 @@
 import { exportAllDrawnGeoJson } from "../drawing/geojsonExport";
 import { setActiveDrawColor } from "../drawing/drawingOptions";
 import { deleteAllTrackedShapes, trackedShapes } from "../drawing/shapeRegistry";
-import { downloadMap4KImage } from "../map/exportMap";
 import { state } from "../state";
 
 /**
@@ -42,11 +41,5 @@ export function setupGeomanSidebarControls(): void {
                 deleteAllTrackedShapes();
                 state.preservedDrawnGeoJson = null;
             }
-        });
-
-    document
-        .getElementById("btn-download-4k-map")
-        ?.addEventListener("click", () => {
-            downloadMap4KImage();
         });
 }

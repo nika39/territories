@@ -301,10 +301,8 @@ export async function downloadMap4KImage(): Promise<void> {
     isExporting = true;
     showToast("4K სურათი მზადდება...");
 
-    const buttons = document.querySelectorAll<HTMLElement>(
-        "#btn-download-4k-map, #map-btn-download-4k",
-    );
-    buttons.forEach((b) => b.classList.add("loading"));
+    const downloadBtn = document.getElementById("map-btn-download-4k");
+    downloadBtn?.classList.add("loading");
 
     try {
         const aspectRatio = clientWidth / clientHeight;
@@ -364,6 +362,6 @@ export async function downloadMap4KImage(): Promise<void> {
         showToast("სურათის გადმოწერა ვერ მოხერხდა");
     } finally {
         isExporting = false;
-        buttons.forEach((b) => b.classList.remove("loading"));
+        downloadBtn?.classList.remove("loading");
     }
 }
