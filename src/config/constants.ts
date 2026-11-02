@@ -35,6 +35,9 @@ const YANDEX_BASE_URL =
 const YANDEX_HIDE_ROAD_ICONS_RULE =
     "tags.any:road|tags.none:road_1|tags.none:road_2|tags.none:road_3|tags.none:road_4|tags.none:road_5|tags.none:road_6|tags.none:road_7|elements:label.icon|stylers.visibility:off";
 
+const YANDEX_HIDE_ROAD_LABELS_RULE =
+    "tags.any:road|elements:label|stylers.visibility:off";
+
 function buildYandexStyleUrl(rules: string[]): string {
     return YANDEX_BASE_URL + rules.join("~");
 }
@@ -49,5 +52,5 @@ export const YANDEX_STYLE_NEW = buildYandexStyleUrl([
     "tags.any:poi|tags.none:parking|tags.none:cemetery|stylers.visibility:off",
     "tags.any:entrance|stylers.visibility:off",
     "tags.any:food_and_drink|tags.any:shopping|tags.any:commercial_services|stylers.visibility:off",
-    YANDEX_HIDE_ROAD_ICONS_RULE,
+    YANDEX_HIDE_ROAD_LABELS_RULE,
 ]);
