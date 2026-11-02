@@ -1,6 +1,11 @@
 import L from "leaflet";
 import { state } from "../state";
-import { SOLID_LINE_ICON_SVG, SNAPPING_ICON_SVG } from "../ui/icons";
+import {
+    DOWNLOAD_4K_ICON_SVG,
+    SNAPPING_ICON_SVG,
+    SOLID_LINE_ICON_SVG,
+} from "../ui/icons";
+import { downloadMap4KImage } from "../map/exportMap";
 import { toggleSolidLines, toggleSnapping } from "./drawingOptions";
 
 interface OptionButton {
@@ -29,6 +34,16 @@ function getOptionButtons(): OptionButton[] {
             icon: SNAPPING_ICON_SVG,
             isActive: () => state.isSnappingEnabled,
             onClick: toggleSnapping,
+        },
+        {
+            containerId: "map-btn-download-4k-container",
+            buttonId: "map-btn-download-4k",
+            title: "4K რუკის გადმოწერა",
+            icon: DOWNLOAD_4K_ICON_SVG,
+            isActive: () => false,
+            onClick: () => {
+                downloadMap4KImage();
+            },
         },
     ];
 }

@@ -28,18 +28,21 @@ export function createMaptilerLayer(styleId?: string): InstanceType<typeof Mapti
     activeMaptilerLayer = new MaptilerLayer({
         apiKey: maptilerApiKey,
         style,
-    });
+        preserveDrawingBuffer: true,
+    } as unknown as ConstructorParameters<typeof MaptilerLayer>[0]);
     return activeMaptilerLayer;
 }
 
 export const googleStreetLayer = L.tileLayer(GOOGLE_STYLE_FULL, {
     maxZoom: 21,
     attribution: "&copy; Google",
+    crossOrigin: "anonymous",
 });
 
 export const yandexLayer = L.tileLayer(YANDEX_STYLE_OLD, {
     maxZoom: 20,
     attribution: "&copy; Yandex",
+    crossOrigin: "anonymous",
 });
 
 /**

@@ -14,23 +14,26 @@ export const MAPTILER_STYLE_FULL = "01a120ea-26f0-7a1d-b08e-4c63cf192ffd";
 export const MAPTILER_STYLE_FILTERED = "01a183f3-3273-7288-9476-f489410fc9de";
 export const MAPTILER_STYLE_ID = MAPTILER_STYLE_FULL;
 
+export const EXPORT_4K_TARGET_WIDTH = 3840;
+
 // ----------------------------------------------------------------------------
-// Google Maps tile styles
+// Google Maps tile styles (scale=2 for high-resolution Retina 512x512 tiles)
 // ----------------------------------------------------------------------------
 
 const GOOGLE_BASE_URL =
-    "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ka";
+    "https://mt1.google.com/vt/lyrs=m&scale=2&x={x}&y={y}&z={z}&hl=ka";
 
 export const GOOGLE_STYLE_FULL = `${GOOGLE_BASE_URL}&apistyle=s.t:81|p.s:-100`;
 
 export const GOOGLE_STYLE_FILTERED = `${GOOGLE_BASE_URL}&apistyle=s.t:2|p.v:off,s.t:40|s.e:g|p.v:on,s.t:4|p.v:on,s.t:3|s.e:l|p.v:off,s.t:81|p.s:-100`;
 
 // ----------------------------------------------------------------------------
-// Yandex tile styles (rules are joined with `~` inside a single `style=` param)
+// Yandex tile styles (rules are joined with `~` inside a single `style=` param;
+// scale=2 for high-resolution Retina 512x512 tiles)
 // ----------------------------------------------------------------------------
 
 const YANDEX_BASE_URL =
-    "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ka_GE&style=";
+    "https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=2&lang=ka_GE&style=";
 
 const YANDEX_HIDE_ROAD_ICONS_RULE =
     "tags.any:road|tags.none:road_1|tags.none:road_2|tags.none:road_3|tags.none:road_4|tags.none:road_5|tags.none:road_6|tags.none:road_7|elements:label.icon|stylers.visibility:off";

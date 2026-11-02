@@ -28,6 +28,14 @@ function configureMaptilerSdkMap(
     const maptilerMap = maptilerLayer.getMaptilerSDKMap();
     if (!maptilerMap) return;
 
+    // Ensure high-DPI rendering from the start
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof (maptilerMap as any).setPixelRatio === "function") {
+        const dpr = Math.max(window.devicePixelRatio || 1, 2);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (maptilerMap as any).setPixelRatio(dpr);
+    }
+
     // 1. Transparent 1x1 fallback pixel to prevent console errors for missing POI icons in custom sprite
     const transparentPixel = {
         width: 1,
