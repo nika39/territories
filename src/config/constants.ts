@@ -17,7 +17,8 @@ export const MAPTILER_STYLE_ID = MAPTILER_STYLE_FULL;
 export const EXPORT_TARGET_WIDTH = 4384;
 export const EXPORT_CANVA_WIDTH = 4384;
 export const EXPORT_CANVA_HEIGHT = 2880;
-export const EXPORT_CANVA_ASPECT_RATIO = EXPORT_CANVA_WIDTH / EXPORT_CANVA_HEIGHT; // ~1.5222
+export const EXPORT_CANVA_ASPECT_RATIO =
+    EXPORT_CANVA_WIDTH / EXPORT_CANVA_HEIGHT; // ~1.5222
 
 // ----------------------------------------------------------------------------
 // Google Maps tile styles (scale=2 for high-resolution Retina 512x512 tiles)
