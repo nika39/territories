@@ -106,76 +106,6 @@
             </div>
         </section>
 
-        <!-- Current Coordinates & Zoom Section -->
-        <section class="coordinates-section" id="coordinates-section">
-            <div class="coordinates-header">
-                <div class="coordinates-title">
-                    <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="22" y1="12" x2="18" y2="12"></line>
-                        <line x1="6" y1="12" x2="2" y2="12"></line>
-                        <line x1="12" y1="6" x2="12" y2="2"></line>
-                        <line x1="12" y1="22" x2="12" y2="18"></line>
-                    </svg>
-                    <span>კოორდინატები და ზუმი</span>
-                </div>
-                <button type="button" class="coordinates-copy-all-btn" id="btn-copy-all-coords" title="მონაცემების კოპირება ([lat, lng], zoom)">
-                    <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                    <span>კოპირება</span>
-                </button>
-            </div>
-
-            <div class="coordinates-card">
-                <!-- Center Coordinates Box -->
-                <div class="coord-box center-coord-box" id="box-center-coords" title="დააჭირეთ ცენტრის კოორდინატების კოპირებისთვის">
-                    <div class="coord-box-header">
-                        <span class="coord-box-label">ცენტრი (LAT, LNG)</span>
-                        <button type="button" class="coord-copy-mini-btn" id="btn-copy-center-coords" title="ცენტრის კოორდინატების კოპირება">
-                            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="coord-box-value" id="coord-center-value">41.677763, 44.848284</div>
-                </div>
-
-                <!-- Sub Grid: Zoom & Cursor Coordinates -->
-                <div class="coord-subgrid">
-                    <!-- Zoom Box -->
-                    <div class="coord-box zoom-coord-box" id="box-zoom" title="დააჭირეთ ზუმის კოპირებისთვის">
-                        <div class="coord-box-header">
-                            <span class="coord-box-label">ზუმი</span>
-                            <button type="button" class="coord-copy-mini-btn" id="btn-copy-zoom" title="ზუმის კოპირება">
-                                <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="coord-box-value" id="coord-zoom-value">16</div>
-                    </div>
-
-                    <!-- Cursor Coordinates Box -->
-                    <div class="coord-box cursor-coord-box" id="box-cursor-coords" title="დააჭირეთ კურსორის კოორდინატების კოპირებისთვის">
-                        <div class="coord-box-header">
-                            <span class="coord-box-label">კურსორი</span>
-                            <button type="button" class="coord-copy-mini-btn" id="btn-copy-cursor-coords" title="კურსორის კოორდინატების კოპირება" style="display: none;">
-                                <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="coord-box-value cursor-value" id="coord-cursor-value">—</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         <!-- Marked Territories Section -->
         <section class="geoman-section" id="geoman-section">
             <!-- Color Palette for Drawing -->
@@ -272,6 +202,38 @@
             <div id="geojson-feedback" class="geojson-feedback" style="display: none;"></div>
         </section>
 
+        <!-- Current Coordinates & Zoom Footer -->
+        <footer class="coordinates-footer" id="coordinates-footer">
+            <div class="coordinates-grid">
+                <!-- Center Coordinates Box -->
+                <div class="coord-box center-coord-box" id="box-center-coords" title="დააჭირეთ კოორდინატების კოპირებისთვის">
+                    <div class="coord-box-header">
+                        <span class="coord-box-label">ცენტრი (LAT, LNG)</span>
+                        <button type="button" class="coord-copy-mini-btn" id="btn-copy-center-coords" title="ცენტრის კოორდინატების კოპირება">
+                            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="coord-box-value" id="coord-center-value">41.677763, 44.848284</div>
+                </div>
+
+                <!-- Zoom Box -->
+                <div class="coord-box zoom-coord-box" id="box-zoom" title="დააჭირეთ ზუმის კოპირებისთვის">
+                    <div class="coord-box-header">
+                        <span class="coord-box-label">ზუმი</span>
+                        <button type="button" class="coord-copy-mini-btn" id="btn-copy-zoom" title="ზუმის კოპირება">
+                            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="coord-box-value" id="coord-zoom-value">16</div>
+                </div>
+            </div>
+        </footer>
 
     </aside>
 
