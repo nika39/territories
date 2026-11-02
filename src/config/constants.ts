@@ -25,7 +25,7 @@ const GOOGLE_BASE_URL =
 
 export const GOOGLE_STYLE_FULL = `${GOOGLE_BASE_URL}&apistyle=s.t:81|p.s:-100`;
 
-export const GOOGLE_STYLE_FILTERED = `${GOOGLE_BASE_URL}&apistyle=s.t:2|s.e:l|p.v:off,s.t:4|p.v:on,s.t:3|s.e:l|p.v:off,s.t:81|p.s:-100`;
+export const GOOGLE_STYLE_FILTERED = `${GOOGLE_BASE_URL}&apistyle=s.t:2|s.e:l|p.v:off,s.t:4|s.e:l.i|p.v:on,s.t:4|s.e:l.t|p.v:off,s.t:3|s.e:l|p.v:off,s.t:81|p.s:-100`;
 
 // ----------------------------------------------------------------------------
 // Yandex tile styles (rules are joined with `~` inside a single `style=` param;
@@ -56,4 +56,5 @@ export const YANDEX_STYLE_NEW = buildYandexStyleUrl([
     "tags.any:entrance|stylers.visibility:off",
     "tags.any:food_and_drink|tags.any:shopping|tags.any:commercial_services|stylers.visibility:off",
     YANDEX_HIDE_ROAD_LABELS_RULE,
+    "tags.any:transit|elements:label.text|stylers.visibility:off",
 ]);
