@@ -6,6 +6,7 @@ import { trackedShapes } from "../drawing/shapeRegistry";
 import { updatePinScale } from "../drawing/styles";
 import { state } from "../state";
 import { attachCoordinatesToMap } from "../ui/coordinatesPanel";
+import { updateCanvaFramePosition } from "../ui/canvaFrame";
 import { hideAppLoader } from "../ui/loader";
 import { applyUiVisibility } from "../ui/uiVisibility";
 import { getLayerForProvider } from "./providers";
@@ -127,4 +128,14 @@ export function recreateMap(
 
     // Track real-time coordinates and zoom on the sidebar
     attachCoordinatesToMap(map);
+
+    // Keep Canva viewfinder aligned with map container
+    map.on("resize", () => {
+        if (state.isCanvaFrameActive) {
+            updateCanvaFramePosition();
+        }
+    });
+    if (state.isCanvaFrameActive) {
+        updateCanvaFramePosition();
+    }
 }

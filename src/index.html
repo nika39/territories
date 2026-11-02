@@ -18,6 +18,16 @@
     <!-- Fullscreen Map Container -->
     <div id="map-container" class="map-container"></div>
 
+    <!-- Canva Viewfinder / Guide Frame (4384x2880) -->
+    <div id="canva-frame-container" class="canva-frame-container" style="display: none;">
+        <div id="canva-frame-box" class="canva-frame-box">
+            <div class="canva-frame-corner top-left"></div>
+            <div class="canva-frame-corner top-right"></div>
+            <div class="canva-frame-corner bottom-left"></div>
+            <div class="canva-frame-corner bottom-right"></div>
+        </div>
+    </div>
+
     <!-- Premium Dashboard Sidebar -->
     <aside class="dashboard-sidebar" id="dashboard-sidebar">
         <!-- Sidebar Header -->
@@ -31,7 +41,7 @@
             </div>
             <div class="logo-title">
                 <h1>ტერიტორიების მენეჯერი</h1>
-                <span class="sub-title">MapTiler ინტეგრაცია</span>
+                <span class="sub-title">Yandex Maps ინტეგრაცია</span>
             </div>
         </header>
 
@@ -41,8 +51,8 @@
             <h3>რუკის ტიპი</h3>
             <div class="switcher-buttons">
                 <button class="switcher-btn" data-provider="google-street">Google Maps</button>
-                <button class="switcher-btn active" data-provider="maptiler">MapTiler</button>
-                <button class="switcher-btn" data-provider="yandex">Yandex Maps</button>
+                <button class="switcher-btn" data-provider="maptiler">MapTiler</button>
+                <button class="switcher-btn active" data-provider="yandex">Yandex Maps</button>
             </div>
 
             <!-- Google Style Variant Switcher -->
@@ -66,7 +76,7 @@
             </div>
 
             <!-- MapTiler Style Variant Switcher -->
-            <div class="maptiler-style-switcher" id="maptiler-style-switcher">
+            <div class="maptiler-style-switcher" id="maptiler-style-switcher" style="display: none;">
                 <div class="maptiler-style-header">
                     <span class="maptiler-style-title">
                         MapTiler იარლიყები
@@ -86,19 +96,19 @@
             </div>
 
             <!-- Yandex Style Variant Switcher -->
-            <div class="yandex-style-switcher" id="yandex-style-switcher" style="display: none;">
+            <div class="yandex-style-switcher" id="yandex-style-switcher" style="display: block;">
                 <div class="yandex-style-header">
                     <span class="yandex-style-title">
                         Yandex იარლიყები
                     </span>
-                    <span class="yandex-style-badge" id="yandex-style-badge">ყველა იარლიყი</span>
+                    <span class="yandex-style-badge" id="yandex-style-badge">გაფილტრული</span>
                 </div>
                 <div class="yandex-style-buttons">
-                    <button type="button" class="yandex-style-btn active" data-yandex-style="old" id="btn-yandex-style-old" title="ყველა საჭირო იარლიყი გამოჩენილია">
+                    <button type="button" class="yandex-style-btn" data-yandex-style="old" id="btn-yandex-style-old" title="ყველა საჭირო იარლიყი გამოჩენილია">
                         <span class="dot"></span>
                         <span>ყველა იარლიყი</span>
                     </button>
-                    <button type="button" class="yandex-style-btn" data-yandex-style="new" id="btn-yandex-style-new" title="არასაჭირო იარლიყები დამალულია">
+                    <button type="button" class="yandex-style-btn active" data-yandex-style="new" id="btn-yandex-style-new" title="არასაჭირო იარლიყები დამალულია">
                         <span class="dot"></span>
                         <span>გაფილტრული</span>
                     </button>

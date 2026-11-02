@@ -16,6 +16,7 @@ import { renderShapesList } from "./ui/shapesList";
 import { setupGeomanSidebarControls } from "./ui/sidebarControls";
 import { setupStyleSwitchers } from "./ui/styleSwitcher";
 import { setupCoordinatesControls } from "./ui/coordinatesPanel";
+import { setupCanvaFrame } from "./ui/canvaFrame";
 
 export {
     GOOGLE_STYLE_FULL,
@@ -43,6 +44,7 @@ function bootstrap(): void {
     setupGeoJsonControls();
     setupGeomanSidebarControls();
     setupCoordinatesControls();
+    setupCanvaFrame();
 
     // Fallback load overlay fade-out
     setTimeout(hideAppLoader, LOADER_FALLBACK_MS);

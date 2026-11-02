@@ -1,8 +1,13 @@
 import L from "leaflet";
-import { EXPORT_TARGET_WIDTH } from "../config/constants";
+import {
+    EXPORT_CANVA_HEIGHT,
+    EXPORT_CANVA_WIDTH,
+    EXPORT_TARGET_WIDTH,
+} from "../config/constants";
 import { trackedShapes } from "../drawing/shapeRegistry";
 import { getPinScaleForZoom } from "../drawing/styles";
 import { state } from "../state";
+import { getCanvaFrameRect } from "../ui/canvaFrame";
 import { showToast } from "../ui/toast";
 import { copyBlobToClipboard } from "../utils/clipboard";
 import { getActiveMaptilerLayer } from "./providers";
@@ -314,13 +319,30 @@ export async function copyMapImage(): Promise<void> {
     copyBtn?.classList.add("loading");
 
     try {
-        const aspectRatio = clientWidth / clientHeight;
-        const targetWidth = Math.max(
-            EXPORT_TARGET_WIDTH,
-            Math.round(clientWidth * (window.devicePixelRatio || 1)),
-        );
-        const targetHeight = Math.round(targetWidth / aspectRatio);
-        const scaleFactor = targetWidth / clientWidth;
+        let targetWidth: number;
+        let targetHeight: number;
+        let scaleFactor: number;
+        let offsetX: number;
+        let offsetY: number;
+
+        if (state.isCanvaFrameActive) {
+            const frame = getCanvaFrameRect(clientWidth, clientHeight);
+            targetWidth = EXPORT_CANVA_WIDTH;
+            targetHeight = EXPORT_CANVA_HEIGHT;
+            scaleFactor = targetWidth / frame.width;
+            offsetX = -frame.left * scaleFactor;
+            offsetY = -frame.top * scaleFactor;
+        } else {
+            const aspectRatio = clientWidth / clientHeight;
+            targetWidth = Math.max(
+                EXPORT_TARGET_WIDTH,
+                Math.round(clientWidth * (window.devicePixelRatio || 1)),
+            );
+            targetHeight = Math.round(targetWidth / aspectRatio);
+            scaleFactor = targetWidth / clientWidth;
+            offsetX = 0;
+            offsetY = 0;
+        }
 
         const canvas = document.createElement("canvas");
         canvas.width = targetWidth;
@@ -343,12 +365,12 @@ export async function copyMapImage(): Promise<void> {
             targetWidth,
             targetHeight,
             scaleFactor,
-            0,
-            0,
+            offsetX,
+            offsetY,
         );
 
         // 2. Draw user added rectangles, polygons, and pins
-        renderUserShapes(map, ctx, scaleFactor, 0, 0);
+        renderUserShapes(map, ctx, scaleFactor, offsetX, offsetY);
 
         // 3. Export to PNG Blob and copy to clipboard
         const blob = await new Promise<Blob | null>((resolve) => {
@@ -364,7 +386,11 @@ export async function copyMapImage(): Promise<void> {
             throw new Error("Clipboard copy failed");
         }
 
-        showToast(`სურათი წარმატებით დაკოპირდა (${targetWidth}x${targetHeight})`);
+        showToast(
+            state.isCanvaFrameActive
+                ? `სურათი დაკოპირდა Canva-ს ზომით (${targetWidth}x${targetHeight})`
+                : `სურათი წარმატებით დაკოპირდა (${targetWidth}x${targetHeight})`,
+        );
     } catch (err) {
         console.error("Map Export Error:", err);
         showToast("სურათის კოპირება ვერ მოხერხდა");

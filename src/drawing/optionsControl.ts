@@ -1,12 +1,14 @@
 import L from "leaflet";
 import { state } from "../state";
 import {
+    CANVA_FRAME_ICON_SVG,
     COPY_4K_ICON_SVG,
     SNAPPING_ICON_SVG,
     SOLID_LINE_ICON_SVG,
 } from "../ui/icons";
 import { copyMapImage } from "../map/exportMap";
 import { toggleSolidLines, toggleSnapping } from "./drawingOptions";
+import { toggleCanvaFrame } from "../ui/canvaFrame";
 
 interface OptionButton {
     containerId: string;
@@ -36,9 +38,19 @@ function getOptionButtons(): OptionButton[] {
             onClick: toggleSnapping,
         },
         {
+            containerId: "map-btn-canva-frame-container",
+            buttonId: "map-btn-toggle-canva-frame",
+            title: "Canva ჩარჩო (4384×2880)",
+            icon: CANVA_FRAME_ICON_SVG,
+            isActive: () => state.isCanvaFrameActive,
+            onClick: toggleCanvaFrame,
+        },
+        {
             containerId: "map-btn-copy-4k-container",
             buttonId: "map-btn-copy-4k",
-            title: "რუკის მაღალი ხარისხით კოპირება (4384px)",
+            title: state.isCanvaFrameActive
+                ? "რუკის კოპირება Canva-სთვის (4384×2880)"
+                : "რუკის მაღალი ხარისხით კოპირება (4384px)",
             icon: COPY_4K_ICON_SVG,
             isActive: () => false,
             onClick: () => {

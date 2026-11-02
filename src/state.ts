@@ -18,18 +18,20 @@ export interface AppState {
     isSnappingEnabled: boolean;
     isSolidLines: boolean;
     isDrawnOpaque: boolean;
+    isCanvaFrameActive: boolean;
     preservedDrawnGeoJson: GeoJSON.FeatureCollection | null;
 }
 
 export const state: AppState = {
     map: null,
     currentProvider: DEFAULT_PROVIDER,
-    labelStyleMode: "all",
+    labelStyleMode: "filtered",
     isUiHidden: false,
     drawnItemsGroup: null,
     activeDrawColor: DEFAULT_DRAW_COLOR,
     isSnappingEnabled: true,
     isSolidLines: false,
+    isCanvaFrameActive: false,
     get isDrawnOpaque() {
         return this.isSolidLines;
     },

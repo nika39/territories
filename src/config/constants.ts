@@ -4,7 +4,7 @@ import type { LatLngTuple } from "leaflet";
 export const INITIAL_CENTER: LatLngTuple = [41.677763, 44.848284];
 export const INITIAL_ZOOM = 16;
 
-export const DEFAULT_PROVIDER = "maptiler";
+export const DEFAULT_PROVIDER = "yandex";
 export const DEFAULT_DRAW_COLOR = "#007aff";
 
 export const TOAST_DURATION_MS = 1800;
@@ -15,6 +15,9 @@ export const MAPTILER_STYLE_FILTERED = "01a183f3-3273-7288-9476-f489410fc9de";
 export const MAPTILER_STYLE_ID = MAPTILER_STYLE_FULL;
 
 export const EXPORT_TARGET_WIDTH = 4384;
+export const EXPORT_CANVA_WIDTH = 4384;
+export const EXPORT_CANVA_HEIGHT = 2880;
+export const EXPORT_CANVA_ASPECT_RATIO = EXPORT_CANVA_WIDTH / EXPORT_CANVA_HEIGHT; // ~1.5222
 
 // ----------------------------------------------------------------------------
 // Google Maps tile styles (scale=2 for high-resolution Retina 512x512 tiles)

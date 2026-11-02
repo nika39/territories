@@ -3,7 +3,7 @@ import { MaptilerLayer } from "@maptiler/leaflet-maptilersdk";
 import {
     GOOGLE_STYLE_FULL,
     MAPTILER_STYLE_FULL,
-    YANDEX_STYLE_OLD,
+    YANDEX_STYLE_NEW,
 } from "../config/constants";
 
 const maptilerApiKey: string = process.env.MAPTILER_API_KEY || "";
@@ -39,7 +39,7 @@ export const googleStreetLayer = L.tileLayer(GOOGLE_STYLE_FULL, {
     crossOrigin: "anonymous",
 });
 
-export const yandexLayer = L.tileLayer(YANDEX_STYLE_OLD, {
+export const yandexLayer = L.tileLayer(YANDEX_STYLE_NEW, {
     maxZoom: 20,
     attribution: "&copy; Yandex",
     crossOrigin: "anonymous",

@@ -38,6 +38,15 @@ export const SNAPPING_ICON_SVG = `
         <line x1="16" y1="3" x2="20" y2="3"></line>
     </svg>`;
 
+export const CANVA_FRAME_ICON_SVG = `
+    <svg viewBox="0 0 24 24" width="18" height="18" ${STROKE_ICON_ATTRS}>
+        <path d="M4 8V5a1 1 0 0 1 1-1h3"></path>
+        <path d="M16 4h3a1 1 0 0 1 1 1v3"></path>
+        <path d="M20 16v3a1 1 0 0 1-1 1h-3"></path>
+        <path d="M8 20H5a1 1 0 0 1-1-1v-3"></path>
+        <rect x="7" y="7" width="10" height="10" rx="1" stroke-dasharray="2 2"></rect>
+    </svg>`;
+
 export const COPY_4K_ICON_SVG = `
     <svg viewBox="0 0 24 24" width="18" height="18" ${STROKE_ICON_ATTRS}>
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
