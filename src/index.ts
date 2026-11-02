@@ -15,6 +15,7 @@ import { setupMapSwitcher } from "./ui/mapSwitcher";
 import { renderShapesList } from "./ui/shapesList";
 import { setupGeomanSidebarControls } from "./ui/sidebarControls";
 import { setupStyleSwitchers } from "./ui/styleSwitcher";
+import { setupCoordinatesControls } from "./ui/coordinatesPanel";
 
 export {
     GOOGLE_STYLE_FULL,
@@ -41,6 +42,7 @@ function bootstrap(): void {
     setupKeyboardShortcuts();
     setupGeoJsonControls();
     setupGeomanSidebarControls();
+    setupCoordinatesControls();
 
     // Fallback load overlay fade-out
     setTimeout(hideAppLoader, LOADER_FALLBACK_MS);

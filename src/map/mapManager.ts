@@ -5,6 +5,7 @@ import { setupGeomanOnMap } from "../drawing/geomanSetup";
 import { trackedShapes } from "../drawing/shapeRegistry";
 import { updatePinScale } from "../drawing/styles";
 import { state } from "../state";
+import { attachCoordinatesToMap } from "../ui/coordinatesPanel";
 import { hideAppLoader } from "../ui/loader";
 import { applyUiVisibility } from "../ui/uiVisibility";
 import { getLayerForProvider } from "./providers";
@@ -115,4 +116,7 @@ export function recreateMap(
 
     // Initialize Geoman on the newly created map
     setupGeomanOnMap(map);
+
+    // Track real-time coordinates and zoom on the sidebar
+    attachCoordinatesToMap(map);
 }

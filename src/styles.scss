@@ -503,6 +503,163 @@ html {
     }
 }
 
+/* Coordinates & Zoom Section */
+.coordinates-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .coordinates-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .coordinates-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: $text-secondary;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 600;
+
+            svg {
+                color: $primary-color;
+            }
+        }
+
+        .coordinates-copy-all-btn {
+            background: rgba(0, 122, 255, 0.12);
+            border: 1px solid rgba(0, 122, 255, 0.3);
+            border-radius: 8px;
+            padding: 3px 8px;
+            color: #5ac8fa;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+            outline: none;
+
+            &:hover {
+                background: rgba(0, 122, 255, 0.22);
+                border-color: rgba(0, 122, 255, 0.5);
+                color: #ffffff;
+                transform: translateY(-1px);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+    }
+
+    .coordinates-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .coord-box {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid $border-light;
+        border-radius: 12px;
+        padding: 8px 12px;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: $border-hover;
+            transform: translateY(-1px);
+
+            .coord-copy-mini-btn {
+                opacity: 1;
+                color: $primary-color;
+            }
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+
+        .coord-box-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .coord-box-label {
+            font-size: 0.67rem;
+            color: $text-secondary;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .coord-copy-mini-btn {
+            background: transparent;
+            border: none;
+            color: $text-secondary;
+            opacity: 0.55;
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            outline: none;
+
+            &:hover {
+                opacity: 1;
+                color: #ffffff;
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .coord-box-value {
+            font-family:
+                ui-monospace,
+                SFMono-Regular,
+                Menlo,
+                Monaco,
+                Consolas,
+                monospace;
+            font-size: 0.86rem;
+            font-weight: 600;
+            color: $text-primary;
+            letter-spacing: -0.2px;
+            line-height: 1.25;
+            user-select: text;
+
+            &.cursor-value {
+                font-size: 0.78rem;
+                color: #a1a1aa;
+            }
+        }
+    }
+
+    .coord-subgrid {
+        display: grid;
+        grid-template-columns: 88px 1fr;
+        gap: 6px;
+
+        .zoom-coord-box {
+            .coord-box-value {
+                font-size: 1.05rem;
+                font-weight: 700;
+                color: $primary-color;
+            }
+        }
+    }
+}
+
 /* Hide map UI (Sidebar, Zoom controls, Copyright/Attribution) in Zen Mode */
 .dashboard-sidebar {
     transition:
