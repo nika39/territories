@@ -1,11 +1,11 @@
 import L from "leaflet";
 import { state } from "../state";
 import {
-    DOWNLOAD_4K_ICON_SVG,
+    COPY_4K_ICON_SVG,
     SNAPPING_ICON_SVG,
     SOLID_LINE_ICON_SVG,
 } from "../ui/icons";
-import { downloadMap4KImage } from "../map/exportMap";
+import { copyMapImage } from "../map/exportMap";
 import { toggleSolidLines, toggleSnapping } from "./drawingOptions";
 
 interface OptionButton {
@@ -36,13 +36,13 @@ function getOptionButtons(): OptionButton[] {
             onClick: toggleSnapping,
         },
         {
-            containerId: "map-btn-download-4k-container",
-            buttonId: "map-btn-download-4k",
-            title: "რუკის მაღალი ხარისხით გადმოწერა (4384px)",
-            icon: DOWNLOAD_4K_ICON_SVG,
+            containerId: "map-btn-copy-4k-container",
+            buttonId: "map-btn-copy-4k",
+            title: "რუკის მაღალი ხარისხით კოპირება (4384px)",
+            icon: COPY_4K_ICON_SVG,
             isActive: () => false,
             onClick: () => {
-                downloadMap4KImage();
+                copyMapImage();
             },
         },
     ];

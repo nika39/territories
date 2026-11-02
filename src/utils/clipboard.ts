@@ -26,3 +26,22 @@ export async function copyToClipboard(text: string): Promise<boolean> {
         return false;
     }
 }
+
+/**
+ * Safely copies an image Blob to the system clipboard using the Async Clipboard API.
+ */
+export async function copyBlobToClipboard(blob: Blob): Promise<boolean> {
+    try {
+        if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    [blob.type || "image/png"]: blob,
+                }),
+            ]);
+            return true;
+        }
+    } catch (err) {
+        console.error("Failed to copy image to clipboard:", err);
+    }
+    return false;
+}

@@ -4,6 +4,7 @@ import { trackedShapes } from "../drawing/shapeRegistry";
 import { getPinScaleForZoom } from "../drawing/styles";
 import { state } from "../state";
 import { showToast } from "../ui/toast";
+import { copyBlobToClipboard } from "../utils/clipboard";
 import { getActiveMaptilerLayer } from "./providers";
 
 let isExporting = false;
@@ -287,11 +288,11 @@ function renderUserShapes(
 }
 
 /**
- * Downloads a crisp ultra-high resolution (4384px width, preserving exact screen aspect ratio)
- * PNG image of the current map view including all drawn polygons, rectangles, and pins,
- * without stretching and without cropping any visible content.
+ * Copies a crisp ultra-high resolution (4384px width, preserving exact screen aspect ratio)
+ * PNG image of the current map view including all drawn polygons, rectangles, and pins
+ * directly to the system clipboard.
  */
-export async function downloadMapImage(): Promise<void> {
+export async function copyMapImage(): Promise<void> {
     if (isExporting) return;
     const map = state.map;
     if (!map) {
@@ -309,8 +310,8 @@ export async function downloadMapImage(): Promise<void> {
     isExporting = true;
     showToast("მაღალი ხარისხის სურათი მზადდება...");
 
-    const downloadBtn = document.getElementById("map-btn-download-4k");
-    downloadBtn?.classList.add("loading");
+    const copyBtn = document.getElementById("map-btn-copy-4k");
+    copyBtn?.classList.add("loading");
 
     try {
         const aspectRatio = clientWidth / clientHeight;
@@ -349,40 +350,26 @@ export async function downloadMapImage(): Promise<void> {
         // 2. Draw user added rectangles, polygons, and pins
         renderUserShapes(map, ctx, scaleFactor, 0, 0);
 
-        // 3. Export to PNG Blob and trigger browser download
-        await new Promise<void>((resolve, reject) => {
-            canvas.toBlob(
-                (blob) => {
-                    if (!blob) {
-                        reject(new Error("Blob generation failed"));
-                        return;
-                    }
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    const dateStr = new Date()
-                        .toISOString()
-                        .replace(/[:.]/g, "-")
-                        .slice(0, 19);
-                    a.download = `map-${targetWidth}x${targetHeight}-${state.currentProvider}-${dateStr}.png`;
-                    a.href = url;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    setTimeout(() => URL.revokeObjectURL(url), 5000);
-                    showToast(`სურათი წარმატებით ჩამოიტვირთა (${targetWidth}x${targetHeight})`);
-                    resolve();
-                },
-                "image/png",
-                1.0,
-            );
+        // 3. Export to PNG Blob and copy to clipboard
+        const blob = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob(resolve, "image/png");
         });
+
+        if (!blob) {
+            throw new Error("Blob generation failed");
+        }
+
+        const copied = await copyBlobToClipboard(blob);
+        if (!copied) {
+            throw new Error("Clipboard copy failed");
+        }
+
+        showToast(`სურათი წარმატებით დაკოპირდა (${targetWidth}x${targetHeight})`);
     } catch (err) {
         console.error("Map Export Error:", err);
-        showToast("სურათის გადმოწერა ვერ მოხერხდა");
+        showToast("სურათის კოპირება ვერ მოხერხდა");
     } finally {
         isExporting = false;
-        downloadBtn?.classList.remove("loading");
+        copyBtn?.classList.remove("loading");
     }
 }
-
-export const downloadMap4KImage = downloadMapImage;
