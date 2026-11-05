@@ -1,5 +1,5 @@
 {
-    "name": "@videra/territories",
+    "name": "territories",
     "version": "0.1.0",
     "description": "Territories Manager",
     "main": "dist/territories.js",
@@ -12,7 +12,7 @@
         "typecheck": "tsc --noEmit",
         "lint": "eslint \"src/**/*.{ts,js}\""
     },
-    "license": "UNLICENSED",
+    "license": "Unlicense",
     "private": true,
     "devDependencies": {
         "@babel/core": "^7.26.0",

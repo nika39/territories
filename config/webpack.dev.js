@@ -11,12 +11,6 @@ module.exports = merge(common, {
 
     output: {
         filename: "territories.js",
-        library: {
-            name: "Territories",
-            type: "umd",
-            export: "default",
-        },
-        globalObject: "this",
     },
 
     devServer: {
@@ -66,11 +60,6 @@ module.exports = merge(common, {
                 use: [
                     {
                         loader: "style-loader",
-                        options: {
-                            attributes: {
-                                "data-videra": "all-players",
-                            },
-                        },
                     },
                     {
                         loader: "css-loader",

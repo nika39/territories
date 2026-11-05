@@ -14,13 +14,8 @@ module.exports = () => {
 
         output: {
             path: path.resolve(__dirname, "../dist"),
-            filename: "index.js",
-            library: {
-                name: "Videra",
-                type: "umd",
-                export: "default",
-            },
-            globalObject: "this",
+            filename: "js/[name].[contenthash:8].js",
+            clean: true,
         },
 
         // Override the babel-loader rule with modern-specific browserslist
@@ -44,11 +39,6 @@ module.exports = () => {
                     use: [
                         {
                             loader: "style-loader",
-                            options: {
-                                attributes: {
-                                    "data-videra": "all-players",
-                                },
-                            },
                         },
                         { loader: "css-loader", options: { importLoaders: 2 } },
                         {
