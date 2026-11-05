@@ -29,6 +29,9 @@ export function createMaptilerLayer(styleId?: string): InstanceType<typeof Mapti
         apiKey: maptilerApiKey,
         style,
         preserveDrawingBuffer: true,
+        canvasContextAttributes: {
+            preserveDrawingBuffer: true,
+        },
     } as unknown as ConstructorParameters<typeof MaptilerLayer>[0]);
     return activeMaptilerLayer;
 }
